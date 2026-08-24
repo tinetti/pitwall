@@ -136,6 +136,28 @@ export function detectPathExists(pattern, repoRoot) {
 }
 
 /**
+ * Run a `doneWhenCmd`, separating "it ran and said no" from "it could not run at all". Only the
+ * second is worth reporting: a detector that answers `false` forever with no explanation is the
+ * hard-stall failure mode.
+ *
+ * @param {string} command
+ * @param {string} cwd
+ * @returns {{ran:boolean, notFound:boolean, status:number|null}}
+ */
+function runDetector(command, cwd) {
+  const result = spawnSync(command, {
+    cwd,
+    shell: true,
+    stdio: 'ignore',
+    timeout: DETECTOR_TIMEOUT_MS,
+    windowsHide: true,
+  });
+  if (result.error || result.status === null) return { ran: false, notFound: false, status: null };
+  if (result.status === 127) return { ran: false, notFound: true, status: 127 };
+  return { ran: true, notFound: false, status: result.status };
+}
+
+/**
  * `doneWhenCmd`: judged by exit code only; stdout is ignored. A missing binary (exit 127) is
  * simply not-done — a detector never throws, because one broken manifest must not stop inference.
  *
@@ -144,28 +166,63 @@ export function detectPathExists(pattern, repoRoot) {
  * @returns {boolean}
  */
 export function detectCmd(command, cwd) {
-  const result = spawnSync(command, {
-    cwd,
-    shell: true,
-    stdio: 'ignore',
-    timeout: DETECTOR_TIMEOUT_MS,
-    windowsHide: true,
-  });
-  return !result.error && result.status === 0;
+  const result = runDetector(command, cwd);
+  return result.ran && result.status === 0;
 }
 
 /**
  * Evaluate a provider's detectors. Both must pass when both are present — there are no boolean
  * combinators and no expression language by design.
  *
+ * The rule lives once, in {@link evaluateProvider}; this is the verdict without the warnings, for
+ * callers that have nothing to report them to. Two copies of "both must pass, path first" would
+ * drift.
+ *
  * @param {Pick<Provider,'doneWhenPathExists'|'doneWhenCmd'>} provider
  * @param {string} repoRoot
  * @returns {boolean}
  */
 export function providerIsDone(provider, repoRoot) {
-  const checks = [];
-  if (provider.doneWhenPathExists) checks.push(() => detectPathExists(provider.doneWhenPathExists, repoRoot));
-  if (provider.doneWhenCmd) checks.push(() => detectCmd(provider.doneWhenCmd, repoRoot));
-  if (checks.length === 0) return false;
-  return checks.every((check) => check());
+  return evaluateProvider(provider, repoRoot).done;
+}
+
+/**
+ * The provider's verdict, plus the warnings a caller needs to explain a beat that never completes.
+ * A detector that cannot be executed at all — missing binary, spawn failure, timeout — is still
+ * not-done, but silently so it would look identical to honest work remaining.
+ *
+ * @param {Provider} provider
+ * @param {string} repoRoot
+ * @returns {{done:boolean, warnings:string[]}}
+ */
+export function evaluateProvider(provider, repoRoot) {
+  /** @type {string[]} */
+  const warnings = [];
+  const label = provider.path ?? `<${provider.stage}>`;
+  let checked = false;
+  let done = true;
+
+  if (provider.doneWhenPathExists) {
+    checked = true;
+    try {
+      done = detectPathExists(provider.doneWhenPathExists, repoRoot);
+    } catch (error) {
+      warnings.push(`${label}: doneWhenPathExists failed: ${error.message}`);
+      done = false;
+    }
+  }
+
+  if (done && provider.doneWhenCmd) {
+    checked = true;
+    const result = runDetector(provider.doneWhenCmd, repoRoot);
+    if (!result.ran) {
+      const reason = result.notFound ? 'command not found' : 'could not be executed';
+      warnings.push(`${label}: doneWhenCmd ${reason}: ${provider.doneWhenCmd}`);
+      done = false;
+    } else {
+      done = result.status === 0;
+    }
+  }
+
+  return { done: checked && done, warnings };
 }

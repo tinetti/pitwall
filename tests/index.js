@@ -4,5 +4,6 @@
 // argument as a file or glob and resolves a directory to its `index.js`. Importing each suite
 // here satisfies both — it is not itself a test file, so default discovery never double-runs it.
 import './frontmatter.test.js';
+import './inference.test.js';
 import './providers.test.js';
 import './repo.test.js';
