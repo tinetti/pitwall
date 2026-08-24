@@ -5,7 +5,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { run } from '../src/cli.js';
-import { cleanupAll, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
+import {
+  cleanupAll,
+  createRepo,
+  pathWithout,
+  tempRoot,
+  withPath,
+  writeFile,
+} from './helpers/repo-fixture.js';
 import { specsFixture } from './fixtures/specs.js';
 
 after(cleanupAll);
@@ -136,6 +143,89 @@ describe('pw next', () => {
     assert.equal(result.out, '');
     assert.match(result.err, /unknown option `--jsonn`/);
     assert.match(result.err, /Usage: pw/);
+  });
+});
+
+describe('pw start', () => {
+  it('creates the worktree, names the cd target, and hands off the beat that follows', () => {
+    const repo = createRepo({ remote: true, originHead: true });
+
+    const result = cli(['start', 'feat/demo'], repo);
+    const target = path.join(path.dirname(repo), `${path.basename(repo)}-feat-demo`);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    assert.equal(fs.existsSync(target), true);
+    assert.match(result.out, new RegExp(`^ {2}cd ${target}$`, 'm'));
+    // The baton must be resolved from the *new* tree: from the operator's cwd the worktree beat
+    // still reads as outstanding, and the command would hand back the beat it has just done.
+    assert.match(result.out, /^feat\/demo · beat 3 of 7 \(refine\)$/m);
+    assert.match(result.out, /✓ worktree/);
+  });
+
+  it('is a clean no-op on a second run, and still prints the baton', () => {
+    const repo = createRepo({ remote: true, originHead: true });
+    cli(['start', 'feat/demo'], repo);
+
+    const result = cli(['start', 'feat/demo'], repo);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    assert.match(result.out, /already exists/);
+    assert.match(result.out, /^ {2}cd /m);
+    assert.match(result.out, /\(refine\)/);
+  });
+
+  it('reports a no-op without a cd line when run from inside the worktree it would create', () => {
+    const repo = createRepo({ remote: true, originHead: true });
+    cli(['start', 'feat/demo'], repo);
+    const target = path.join(path.dirname(repo), `${path.basename(repo)}-feat-demo`);
+
+    const result = cli(['start', 'feat/demo'], target);
+
+    assert.equal(result.code, 0);
+    assert.equal(/^ {2}cd /m.test(result.out), false, 'told the operator to cd where they already are');
+    assert.match(result.out, /already inside/);
+    assert.match(result.out, /\(refine\)/);
+  });
+
+  it('exits 2 with usage when given no branch name at all', () => {
+    const result = cli(['start'], createRepo({ remote: true, originHead: true }));
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /Usage: pw/);
+  });
+
+  it('rejects an option and a second positional rather than guessing which is the branch', () => {
+    const repo = createRepo({ remote: true, originHead: true });
+
+    const flagged = cli(['start', '--force', 'feat/demo'], repo);
+    assert.equal(flagged.code, 2);
+    assert.match(flagged.err, /unknown option `--force`/);
+
+    const extra = cli(['start', 'feat/demo', 'feat/other'], repo);
+    assert.equal(extra.code, 2);
+    assert.match(extra.err, /one branch name/);
+  });
+
+  it('explains itself in one line outside a repository and exits 2', () => {
+    const result = cli(['start', 'feat/demo'], tempRoot());
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.equal(result.err.trimEnd().split('\n').length, 1, `not one line: ${result.err}`);
+    assert.match(result.err, /not inside a git repository/);
+  });
+
+  it('turns a git refusal into a remedy on stderr, with no stack trace and no half-baton', () => {
+    const result = cli(['start', 'feat/demo'], createRepo({ commit: false }));
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /no commits yet/);
+    assert.match(result.err, /initial commit/);
+    assert.equal(/\bat .*\.js:\d+/.test(result.err), false, 'a stack trace leaked into stderr');
   });
 });
 

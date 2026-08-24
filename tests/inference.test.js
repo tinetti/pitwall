@@ -76,10 +76,12 @@ describe('the shipped provider manifests', () => {
     { knownStages: KNOWN_STAGES },
   );
 
-  it('binds every provider-owned beat except the wrapper-owned two', () => {
+  it('binds a baton to every beat that has one — cleanup is the last one still unmanifested', () => {
+    // `worktree` is wrapper-owned for *detection* and provider-bound for its baton: `owner` in
+    // BEATS says who supplies the detector, not who supplies the command and the prose.
     assert.deepEqual(
       [...providers.keys()].sort(),
-      ['contract', 'execute', 'ideate', 'refine', 'specs'],
+      ['contract', 'execute', 'ideate', 'refine', 'specs', 'worktree'],
     );
   });
 
@@ -130,8 +132,14 @@ describe('resolveBeat', () => {
     assert.match(result.provider.path, /openspec-specs\.md$/);
   });
 
-  it('leaves provider undefined for a wrapper-owned beat with no manifest yet', () => {
-    assert.equal(resolve(worktreeFixture().dir).provider, undefined);
+  it('carries the manifest for a wrapper-owned beat too, since the baton is not the detector', () => {
+    const result = resolve(worktreeFixture().dir);
+    assert.equal(result.provider.command, '/pitwall:start');
+    assert.match(result.provider.path, /pitwall-worktree\.md$/);
+  });
+
+  it('leaves provider undefined for a beat with no manifest yet', () => {
+    assert.equal(resolve(cleanupFixture().dir).provider, undefined);
   });
 
   it('reports execute progress from the tasks list, and only on the execute beat', () => {

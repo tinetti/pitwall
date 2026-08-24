@@ -11,3 +11,4 @@ import './preflight-gitignore.test.js';
 import './provider-swap.test.js';
 import './providers.test.js';
 import './repo.test.js';
+import './worktree.test.js';
