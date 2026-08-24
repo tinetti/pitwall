@@ -1,0 +1,174 @@
+import { after, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { run } from '../src/cli.js';
+import { cleanupAll, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
+import { specsFixture } from './fixtures/specs.js';
+
+after(cleanupAll);
+
+const GOLDEN = path.join(path.dirname(fileURLToPath(import.meta.url)), 'golden');
+
+/**
+ * The CLI spawns git with the developer's real environment, so a global `core.excludesFile` on this
+ * machine would otherwise decide whether a fixture repository reports ignored artifacts.
+ *
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+function isolated(fn) {
+  const previous = { global: process.env.GIT_CONFIG_GLOBAL, system: process.env.GIT_CONFIG_SYSTEM };
+  process.env.GIT_CONFIG_GLOBAL = '/dev/null';
+  process.env.GIT_CONFIG_SYSTEM = '/dev/null';
+  try {
+    return fn();
+  } finally {
+    if (previous.global === undefined) delete process.env.GIT_CONFIG_GLOBAL;
+    else process.env.GIT_CONFIG_GLOBAL = previous.global;
+    if (previous.system === undefined) delete process.env.GIT_CONFIG_SYSTEM;
+    else process.env.GIT_CONFIG_SYSTEM = previous.system;
+  }
+}
+
+/**
+ * Drive `run` exactly the way phase 5's `bin/pw` will — argv after the program name, both streams
+ * injected — so this suite covers the same entry point the wrapper will call rather than a subshell.
+ *
+ * The real `openspec` binary is removed from `PATH` for the same reason `tests/baton.test.js`
+ * removes it: the golden comparison is byte-exact, and a CLI installed on the developer's machine
+ * must not be able to change what is rendered.
+ *
+ * @param {string[]} argv
+ * @param {string} cwd
+ * @returns {{code:number, out:string, err:string}}
+ */
+function cli(argv, cwd) {
+  let out = '';
+  let err = '';
+  const code = isolated(() =>
+    withPath(pathWithout('openspec'), () =>
+      run(argv, {
+        cwd,
+        out: (text) => {
+          out += text;
+        },
+        err: (text) => {
+          err += text;
+        },
+      }),
+    ),
+  );
+  return { code, out, err };
+}
+
+describe('pw next', () => {
+  it('prints the baton for the beat the repository is actually on, and exits 0', () => {
+    const fixture = specsFixture();
+    const result = cli(['next'], fixture.dir);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'specs.txt'), 'utf8'));
+  });
+
+  it('exits 0 even from a subdirectory of the worktree', () => {
+    const fixture = specsFixture();
+    const sub = path.join(fixture.dir, 'src', 'nested');
+    fs.mkdirSync(sub, { recursive: true });
+
+    const result = cli(['next'], sub);
+    assert.equal(result.code, 0);
+    assert.match(result.out, /beat 5 of 7 \(specs\)/);
+  });
+
+  it('reports ignored artifacts from a subdirectory — the preflight runs at the repository root', () => {
+    // The load-bearing case: `git check-ignore` resolves its arguments against the process
+    // directory, so running it in `src/nested` would match nothing and the block would vanish
+    // exactly when the operator most needs it. Running from the root is what makes it appear.
+    const fixture = specsFixture();
+    writeFile(path.join(fixture.dir, '.gitignore'), '/openspec/\n');
+    const sub = path.join(fixture.dir, 'src', 'nested');
+    fs.mkdirSync(sub, { recursive: true });
+
+    const result = cli(['next'], sub);
+    assert.equal(result.code, 0, 'the preflight is advice; it never changes the exit code');
+    assert.match(result.out, /^IGNORED BY GIT:$/m);
+    assert.match(result.out, /openspec\/ — artifacts written here will never be committed/);
+  });
+
+  it('stays silent about git-ignored artifacts when the repository ignores none', () => {
+    const result = cli(['next'], specsFixture().dir);
+    assert.equal(result.out.includes('IGNORED BY GIT'), false);
+  });
+
+  it('prints parseable inference JSON under --json, and nothing else', () => {
+    const fixture = specsFixture();
+    const result = cli(['next', '--json'], fixture.dir);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    const state = JSON.parse(result.out);
+    assert.equal(state.beat, 'specs');
+    assert.equal(state.index, 5);
+    assert.equal(state.branch, fixture.branch);
+    assert.deepEqual(state.completed, ['ideate', 'worktree', 'refine', 'contract']);
+    assert.equal(state.provider.command, '/spec:propose');
+  });
+
+  it('explains itself in one line outside a repository and exits 2, with no stack trace', () => {
+    const result = cli(['next'], tempRoot());
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.equal(result.err.trimEnd().split('\n').length, 1, `not one line: ${result.err}`);
+    assert.match(result.err, /not inside a git repository/);
+    assert.equal(/\bat .*\.js:\d+/.test(result.err), false, 'a stack trace leaked into stderr');
+  });
+
+  it('rejects an unknown option rather than printing the human baton to a --json consumer', () => {
+    const result = cli(['next', '--jsonn'], specsFixture().dir);
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /unknown option `--jsonn`/);
+    assert.match(result.err, /Usage: pw/);
+  });
+});
+
+describe('pw argument parsing', () => {
+  it('answers --help after the subcommand, not only before it', () => {
+    const result = cli(['next', '--help'], specsFixture().dir);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    assert.match(result.out, /Usage: pw <command> \[options\]/);
+    assert.equal(result.out.includes('NEXT:'), false, 'a baton was rendered instead of usage');
+  });
+
+  it('answers --help before the subcommand too', () => {
+    const result = cli(['--help'], tempRoot());
+    assert.equal(result.code, 0);
+    assert.match(result.out, /Usage: pw <command> \[options\]/);
+  });
+
+  it('exits 2 on an unknown command', () => {
+    const result = cli(['bogus'], specsFixture().dir);
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /unknown command `bogus`/);
+    assert.match(result.err, /Usage: pw/);
+  });
+
+  it('exits 2 with usage on stderr when given no command at all', () => {
+    const result = cli([], specsFixture().dir);
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /Usage: pw/);
+  });
+});

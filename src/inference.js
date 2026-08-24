@@ -6,8 +6,12 @@ import { evaluateProvider, loadProviders } from './providers.js';
 import { currentBranch, defaultBranch, superprojectRoot, worktreeRoot } from './repo.js';
 import { discoverChangeId, executeProgress } from './progress.js';
 
-/** The manifests Pitwall ships with, used when a caller supplies none. */
-const BUILTIN_PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'providers');
+/**
+ * The manifests Pitwall ships with, used when a caller supplies none. Exported so the CLI can load
+ * the same map it hands to {@link resolveBeat} and derive the preflight's artifact paths from it,
+ * rather than keeping a second copy of this path.
+ */
+export const BUILTIN_PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'providers');
 
 /**
  * @typedef {{beat:string|null, index:number, completed:string[], skipped:string[],

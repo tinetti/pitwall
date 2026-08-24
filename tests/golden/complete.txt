@@ -1,0 +1,5 @@
+feat/thing · all 7 beats complete
+  ✓ ideate  ✓ worktree  ✓ refine  ✓ contract  ✓ specs  ✓ execute  ✓ cleanup
+
+NEXT:
+  nothing to hand off — every beat is complete

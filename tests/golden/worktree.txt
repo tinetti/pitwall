@@ -1,0 +1,7 @@
+feat/thing · beat 2 of 7 (worktree)
+  ✓ ideate
+  ▶ worktree
+
+NEXT:
+  no provider manifest is bound to the worktree beat
+  └ add one under providers/ to give this beat a baton

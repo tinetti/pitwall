@@ -1,0 +1,7 @@
+feat/thing · beat 7 of 7 (cleanup)
+  ✓ ideate  ✓ worktree  ✓ refine  ✓ contract  ✓ specs  ✓ execute
+  ▶ cleanup
+
+NEXT:
+  no provider manifest is bound to the cleanup beat
+  └ add one under providers/ to give this beat a baton
