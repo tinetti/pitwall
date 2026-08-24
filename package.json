@@ -1,0 +1,13 @@
+{
+  "name": "pitwall",
+  "version": "0.1.0",
+  "description": "A thin workflow wrapper that infers where a change stands and hands the next session its baton.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
