@@ -4,6 +4,9 @@
   "description": "A thin workflow wrapper that infers where a change stands and hands the next session its baton.",
   "type": "module",
   "license": "MIT",
+  "bin": {
+    "pw": "bin/pw"
+  },
   "engines": {
     "node": ">=22.0.0"
   },

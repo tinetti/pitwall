@@ -1,0 +1,19 @@
+{
+  "name": "pitwall",
+  "version": "0.1.0",
+  "description": "Workflow spine with pluggable tool holes: one command names the beat, the next command, and the model it wants.",
+  "author": {
+    "name": "John Tinetti",
+    "email": "john@tinetti.net"
+  },
+  "homepage": "https://github.com/tinetti/pitwall",
+  "keywords": [
+    "workflow",
+    "handoff",
+    "session",
+    "worktree",
+    "model-routing",
+    "ideation",
+    "openspec"
+  ]
+}

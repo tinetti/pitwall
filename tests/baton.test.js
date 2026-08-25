@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { BEATS } from '../src/beats.js';
-import { renderBaton } from '../src/baton.js';
+import { renderBaton, renderPosition } from '../src/baton.js';
 import { resolveBeat } from '../src/inference.js';
 import { cleanupAll, createRepo, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
 import { ideateFixture } from './fixtures/ideate.js';
@@ -90,6 +90,10 @@ describe('renderBaton golden output', () => {
       assertGolden(id, renderBaton(resolve(build().dir), CLEAN));
     });
   }
+
+  it('renders the same beat as a position, which is what `pw status` prints', () => {
+    assertGolden('status', renderPosition(resolve(specsFixture().dir), CLEAN));
+  });
 
   it('renders a repository whose seven beats are all complete', () => {
     const repo = createRepo({ remote: true, originHead: true });
@@ -194,6 +198,22 @@ describe('renderBaton NEXT block', () => {
     assert.match(next({}, { changeId: null }), /^ {2}\/spec:propose$/m);
   });
 
+  it('takes the branch instead when the manifest asks for it', () => {
+    // The cleanup beat's target finishes a *branch*; handing it a change id would name the wrong
+    // thing entirely, and both facts are on the inference already.
+    assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/session-handoff$/m);
+  });
+
+  it('interpolates nothing at all when the manifest asks for no argument', () => {
+    const output = next({ command: 'superpowers:some-skill', argument: 'none' });
+    assert.match(output, /^ {2}superpowers:some-skill$/m);
+    assert.equal(output.includes('add-session-handoff'), false);
+  });
+
+  it('omits a requested argument the repository cannot supply', () => {
+    assert.match(next({ command: '/mar', argument: 'branch' }, { branch: null }), /^ {2}\/mar$/m);
+  });
+
   it('sources model and effort from the manifest', () => {
     assert.match(next({ model: 'some-model', effort: 'low' }), /^ {2}└ some-model · low effort$/m);
   });
@@ -234,6 +254,41 @@ describe('renderBaton NEXT block', () => {
     const output = renderBaton(state({ beat: 'worktree', index: 2, provider: undefined }), CLEAN);
     assert.match(output, /NEXT:\n {2}no provider manifest is bound to the worktree beat/);
     assert.match(output, /providers\//);
+  });
+});
+
+describe('renderPosition', () => {
+  it('renders the header and the beat strip exactly as the baton does', () => {
+    const baton = renderBaton(state(), CLEAN).split('\n\n')[0];
+    assert.equal(renderPosition(state(), CLEAN), `${baton}\n`);
+  });
+
+  it('emits no NEXT block — that is the whole difference', () => {
+    const output = renderPosition(state(), CLEAN);
+    assert.equal(output.includes('NEXT:'), false);
+    assert.equal(output.includes('/spec:propose'), false);
+  });
+
+  it('keeps the preflight and the warnings, which are position facts rather than baton facts', () => {
+    const output = renderPosition(state({ warnings: ['inference said so'] }), {
+      ignored: ['openspec/'],
+      warnings: ['preflight said so'],
+    });
+    assert.match(output, /^IGNORED BY GIT:$/m);
+    assert.match(output, /inference said so/);
+    assert.match(output, /preflight said so/);
+  });
+
+  it('still answers when the walk fell off the end, with no baton to fall back on', () => {
+    const output = renderPosition(state({ beat: null, provider: undefined }), CLEAN);
+    assert.match(output, /all 7 beats complete/);
+    assert.equal(output.includes('NEXT:'), false);
+  });
+
+  it('always ends with exactly one trailing newline', () => {
+    const output = renderPosition(state(), CLEAN);
+    assert.equal(output.endsWith('\n'), true);
+    assert.equal(output.endsWith('\n\n'), false);
   });
 });
 

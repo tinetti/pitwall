@@ -146,6 +146,53 @@ describe('pw next', () => {
   });
 });
 
+describe('pw status', () => {
+  it('prints the position for the beat the repository is on, and exits 0', () => {
+    const fixture = specsFixture();
+    const result = cli(['status'], fixture.dir);
+
+    assert.equal(result.code, 0);
+    assert.equal(result.err, '');
+    assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'status.txt'), 'utf8'));
+  });
+
+  it('hands off nothing — the baton is `next`\'s answer, not this one\'s', () => {
+    const result = cli(['status'], specsFixture().dir);
+
+    assert.equal(result.out.includes('NEXT:'), false);
+    assert.equal(result.out.includes('/spec:propose'), false);
+    // The same run of `next` does emit it, so the difference is the command and not the fixture.
+    assert.match(cli(['next'], specsFixture().dir).out, /\/spec:propose/);
+  });
+
+  it('reports ignored artifacts, which belong to the position rather than to the baton', () => {
+    const fixture = specsFixture();
+    writeFile(path.join(fixture.dir, '.gitignore'), '/openspec/\n');
+
+    const result = cli(['status'], fixture.dir);
+    assert.equal(result.code, 0);
+    assert.match(result.out, /^IGNORED BY GIT:$/m);
+  });
+
+  it('explains itself in one line outside a repository and exits 2', () => {
+    const result = cli(['status'], tempRoot());
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.equal(result.err.trimEnd().split('\n').length, 1, `not one line: ${result.err}`);
+    assert.match(result.err, /not inside a git repository/);
+  });
+
+  it('rejects --json rather than printing a second machine surface that could drift from next', () => {
+    const result = cli(['status', '--json'], specsFixture().dir);
+
+    assert.equal(result.code, 2);
+    assert.equal(result.out, '');
+    assert.match(result.err, /unknown option `--json`/);
+    assert.match(result.err, /Usage: pw/);
+  });
+});
+
 describe('pw start', () => {
   it('creates the worktree, names the cd target, and hands off the beat that follows', () => {
     const repo = createRepo({ remote: true, originHead: true });

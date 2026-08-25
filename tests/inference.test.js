@@ -76,13 +76,11 @@ describe('the shipped provider manifests', () => {
     { knownStages: KNOWN_STAGES },
   );
 
-  it('binds a baton to every beat that has one — cleanup is the last one still unmanifested', () => {
-    // `worktree` is wrapper-owned for *detection* and provider-bound for its baton: `owner` in
-    // BEATS says who supplies the detector, not who supplies the command and the prose.
-    assert.deepEqual(
-      [...providers.keys()].sort(),
-      ['contract', 'execute', 'ideate', 'refine', 'specs', 'worktree'],
-    );
+  it('binds a baton to all seven beats — the loop is closed', () => {
+    // `worktree` and `cleanup` are wrapper-owned for *detection* and provider-bound for their
+    // batons: `owner` in BEATS says who supplies the detector, not who supplies the command and
+    // the prose.
+    assert.deepEqual([...providers.keys()].sort(), [...KNOWN_STAGES].sort());
   });
 
   it('names a model and an effort on every manifest, so no stage can leave one unsourced', () => {
@@ -138,8 +136,16 @@ describe('resolveBeat', () => {
     assert.match(result.provider.path, /pitwall-worktree\.md$/);
   });
 
-  it('leaves provider undefined for a beat with no manifest yet', () => {
-    assert.equal(resolve(cleanupFixture().dir).provider, undefined);
+  it('carries the manifest for the terminal beat too, so the loop closes on a baton', () => {
+    const result = resolve(cleanupFixture().dir);
+    assert.equal(result.beat, 'cleanup');
+    assert.match(result.provider.path, /pitwall-cleanup\.md$/);
+  });
+
+  it('leaves provider undefined for a beat no manifest is bound to', () => {
+    // Every shipped beat is bound now, so the unbound render path is reachable only by an operator
+    // who removed a manifest — which is exactly the case worth keeping covered.
+    assert.equal(resolve(cleanupFixture().dir, providerMap({})).provider, undefined);
   });
 
   it('reports execute progress from the tasks list, and only on the execute beat', () => {

@@ -100,6 +100,26 @@ describe('loadProviders', () => {
   it('propagates frontmatter parse errors with the manifest path', () => {
     assert.throws(() => loadProviders(providerDir({ 'listy.md': '---\nstage: contract\n- one\n---\n' })), /listy\.md:3:/);
   });
+
+  for (const value of ['change-id', 'branch', 'none']) {
+    it(`accepts \`argument: ${value}\``, () => {
+      const manifest = VALID.replace('handoff: clear', `handoff: clear\nargument: ${value}`);
+      assert.equal(loadProviders(providerDir({ 'a.md': manifest })).get('contract').argument, value);
+    });
+  }
+
+  it('leaves `argument` unset when the manifest declares none, rather than defaulting it here', () => {
+    // The default belongs to the renderer, which is the only layer that knows what the fact is for.
+    assert.equal(loadProviders(providerDir({ 'a.md': VALID })).get('contract').argument, undefined);
+  });
+
+  it('rejects an unknown `argument` source, naming the file and the values it could have used', () => {
+    const manifest = VALID.replace('handoff: clear', 'handoff: clear\nargument: change_id');
+    assert.throws(
+      () => loadProviders(providerDir({ 'typo.md': manifest })),
+      /typo\.md.*`argument`.*change-id.*branch.*none/s,
+    );
+  });
 });
 
 describe('detectPathExists', () => {

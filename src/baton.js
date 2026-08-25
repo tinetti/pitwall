@@ -13,6 +13,30 @@ const HANDOFF_LINES = {
 /** Used when a manifest declares no `handoff` at all — the command still needs introducing. */
 const DEFAULT_HANDOFF = 'run:';
 
+/**
+ * The repository fact a manifest's `argument` names. Every value returns `null` when the repository
+ * cannot supply it, and a null argument is omitted rather than interpolated empty — a command with
+ * a blank argument is one the next session cannot run.
+ *
+ * A Map rather than an object literal, for the same reason `src/cli.js` uses one for subcommands: a
+ * manifest whose `argument` reads `constructor` would find a function on a plain object's prototype
+ * and be called with the inference state. `loadProviders` rejects that key today, so this is depth
+ * rather than a live bug — but the renderer is also reachable with hand-built providers from tests
+ * and from `pw start`, and a lookup table should not depend on its only caller validating for it.
+ */
+const ARGUMENT_SOURCES = new Map([
+  ['change-id', (state) => state.changeId],
+  ['branch', (state) => state.branch],
+  ['none', () => null],
+]);
+
+/**
+ * What a manifest gets when it names no `argument`. It is the change id because that is what every
+ * spec-driven command takes; the key exists for the targets that take something else — the cleanup
+ * beat finishes a *branch* — and for the ones that take nothing at all.
+ */
+const DEFAULT_ARGUMENT = 'change-id';
+
 const INDENT = '  ';
 
 /**
@@ -87,10 +111,14 @@ function nextBlock(state) {
     ];
   }
 
-  // `changeId` is null until a change exists on disk, and the whole point of the specs beat is that
-  // it does not yet. Omitting the argument is the only honest option: interpolating an empty one
-  // would hand the next session a command it cannot run.
-  const command = state.changeId ? `${provider.command} ${state.changeId}` : provider.command;
+  // The argument is dropped whenever the repository cannot supply it — `changeId` is null until a
+  // change exists on disk, and the whole point of the specs beat is that it does not yet. Omitting
+  // it is the only honest option: an empty one would hand the next session a command it cannot run.
+  const source =
+    ARGUMENT_SOURCES.get(provider.argument ?? DEFAULT_ARGUMENT) ??
+    ARGUMENT_SOURCES.get(DEFAULT_ARGUMENT);
+  const argument = source(state);
+  const command = argument ? `${provider.command} ${argument}` : provider.command;
 
   // Only what the manifest declares. A default effort would be a choice nobody made, attributed to
   // a manifest that never made it.
@@ -106,19 +134,16 @@ function nextBlock(state) {
 }
 
 /**
- * The whole product in one string: where this repository stands, and what the next session runs.
+ * Everything both surfaces say about the repository, appended to whatever `sections` they lead
+ * with. The preflight and the warnings are facts about where the change stands, not about the
+ * handoff, so `pw status` reports them exactly as `pw next` does.
  *
- * Pure by design — no filesystem, no subprocess, no clock. Phases 4 and 5 print the same block from
- * `pw start` and `pw status`, and a renderer that went looking for its own inputs could not be
- * reused by either.
- *
+ * @param {string[]} sections
  * @param {import('./inference.js').Inference} state
- * @param {import('./preflight.js').Preflight} [preflight]
+ * @param {import('./preflight.js').Preflight} preflight
  * @returns {string} ends with exactly one newline
  */
-export function renderBaton(state, preflight = { ignored: [], warnings: [] }) {
-  const sections = [[header(state), ...strip(state)].join('\n'), nextBlock(state).join('\n')];
-
+function withFindings(sections, state, preflight) {
   if (preflight.ignored.length > 0) {
     sections.push(
       [
@@ -138,4 +163,37 @@ export function renderBaton(state, preflight = { ignored: [], warnings: [] }) {
   }
 
   return `${sections.join('\n\n')}\n`;
+}
+
+/**
+ * The whole product in one string: where this repository stands, and what the next session runs.
+ *
+ * Pure by design — no filesystem, no subprocess, no clock. `pw start` prints this same block after
+ * creating a worktree, and a renderer that went looking for its own inputs could not be reused
+ * there.
+ *
+ * @param {import('./inference.js').Inference} state
+ * @param {import('./preflight.js').Preflight} [preflight]
+ * @returns {string} ends with exactly one newline
+ */
+export function renderBaton(state, preflight = { ignored: [], warnings: [] }) {
+  const position = [header(state), ...strip(state)].join('\n');
+  return withFindings([position, nextBlock(state).join('\n')], state, preflight);
+}
+
+/**
+ * Position without a baton, for `pw status`.
+ *
+ * The NEXT block is the one thing left out, and leaving it out is the point: re-issuing an
+ * instruction to an operator who has already acted on it invites it to be run twice. Sharing
+ * {@link withFindings} with {@link renderBaton} is what keeps the two surfaces from disagreeing
+ * about where the same repository stands.
+ *
+ * @param {import('./inference.js').Inference} state
+ * @param {import('./preflight.js').Preflight} [preflight]
+ * @returns {string} ends with exactly one newline
+ */
+export function renderPosition(state, preflight = { ignored: [], warnings: [] }) {
+  const position = [header(state), ...strip(state)].join('\n');
+  return withFindings([position], state, preflight);
 }

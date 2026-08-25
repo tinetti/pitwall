@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { BEATS } from './beats.js';
-import { renderBaton } from './baton.js';
+import { renderBaton, renderPosition } from './baton.js';
 import { BUILTIN_PROVIDERS, resolveBeat } from './inference.js';
 import { artifactPaths, checkIgnored } from './preflight.js';
 import { loadProviders } from './providers.js';
@@ -15,9 +15,10 @@ const USAGE = [
   'Commands:',
   '  next            Where this change stands, and the baton for the next session',
   '  start <branch>  Create the branch and its worktree, then hand off the next beat',
+  '  status          Where this change stands, without the baton',
   '',
   'Options:',
-  '  --json  Print the raw inference result instead of the baton',
+  '  --json  Print the raw inference result instead of the baton (`next` only)',
   '  --help  Print this message',
 ].join('\n');
 
@@ -31,7 +32,7 @@ const NEXT_FLAGS = new Set(['--json']);
 const INDENT = '  ';
 
 /**
- * The repository both subcommands answer for, or `null` once the operator has been told there is
+ * The repository every subcommand answers for, or `null` once the operator has been told there is
  * none.
  *
  * `resolveBeat` deliberately never throws outside a repository — it returns a plausible-looking
@@ -82,6 +83,35 @@ function next(cwd, args, io) {
   }
 
   io.out(renderBaton(state, checkIgnored(root, artifactPaths(providers))));
+  return 0;
+}
+
+/**
+ * `pw status` — the same position `next` reports, with the handoff left out.
+ *
+ * Deliberately takes no options at all, `--json` included. `next --json` already prints the whole
+ * inference, and a second machine-readable surface would be a second thing to keep in step with a
+ * shape that has no reason to differ.
+ *
+ * @param {string} cwd
+ * @param {string[]} args
+ * @param {{out:(text:string)=>void, err:(text:string)=>void}} io
+ * @returns {number} exit code
+ */
+function status(cwd, args, io) {
+  // `--help` is answered by `run` before dispatch, so no argument reaching here is one we know.
+  if (args.length > 0) {
+    io.err(`pitwall: unknown option \`${args[0]}\` for \`status\`\n${USAGE}\n`);
+    return 2;
+  }
+
+  const root = repoRoot(cwd, io);
+  if (root === null) return 2;
+
+  const providers = loadProviders(BUILTIN_PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const state = resolveBeat(cwd, providers);
+
+  io.out(renderPosition(state, checkIgnored(root, artifactPaths(providers))));
   return 0;
 }
 
@@ -149,11 +179,12 @@ function start(cwd, args, io) {
 const COMMANDS = new Map([
   ['next', next],
   ['start', start],
+  ['status', status],
 ]);
 
 /**
- * Argument parsing lives here and only here: phase 5's `bin/pw` is a wrapper around this function,
- * and a second parser in the wrapper would drift from it.
+ * Argument parsing lives here and only here: `bin/pw` is a wrapper around this function, and a
+ * second parser in the wrapper would drift from it.
  *
  * @param {string[]} [argv] arguments after the program name
  * @param {{cwd?:string, out?:(text:string)=>void, err?:(text:string)=>void}} [options]

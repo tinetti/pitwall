@@ -5,6 +5,7 @@
 // here satisfies both — it is not itself a test file, so default discovery never double-runs it.
 import './baton.test.js';
 import './cli.test.js';
+import './commands.test.js';
 import './frontmatter.test.js';
 import './inference.test.js';
 import './preflight-gitignore.test.js';

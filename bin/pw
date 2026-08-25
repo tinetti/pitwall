@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+// The shell surface, and deliberately the thinnest file in the repository.
+//
+// Every flag, every subcommand, and every usage message lives in `src/cli.js`, because the slash
+// commands invoke that module directly: a second parser here would be a second thing to keep in
+// step with, and the two surfaces would drift the first time either gained an option.
+//
+// `process.exitCode` rather than `process.exit`, so a large baton on a pipe is flushed before the
+// process ends.
+import { run } from '../src/cli.js';
+
+process.exitCode = run(process.argv.slice(2));

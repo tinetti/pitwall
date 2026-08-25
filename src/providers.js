@@ -6,11 +6,21 @@ import { parseManifest } from './frontmatter.js';
 
 /**
  * @typedef {{stage:string,command:string,model:string,effort?:string,handoff?:string,
- *            doneWhenPathExists?:string,doneWhenCmd?:string,body:string,path:string}} Provider
+ *            argument?:'change-id'|'branch'|'none',doneWhenPathExists?:string,doneWhenCmd?:string,
+ *            body:string,path:string}} Provider
  */
 
 const REQUIRED = ['stage', 'command', 'model'];
-const OPTIONAL = ['effort', 'handoff', 'doneWhenPathExists', 'doneWhenCmd'];
+const OPTIONAL = ['effort', 'handoff', 'argument', 'doneWhenPathExists', 'doneWhenCmd'];
+
+/**
+ * Which repository fact the renderer appends to `command`.
+ *
+ * Closed rather than free-form, and validated here rather than at render time: a manifest that
+ * asked for `change_id` would otherwise interpolate nothing and hand the next session a command
+ * missing its argument, with nothing on screen to say why.
+ */
+const ARGUMENT_SOURCES = ['change-id', 'branch', 'none'];
 
 /** Milliseconds a `doneWhenCmd` detector is allowed before it is killed. */
 const DETECTOR_TIMEOUT_MS = 10000;
@@ -52,6 +62,12 @@ export function loadProviders(dir, options = {}) {
     }
     if (known && !known.has(meta.stage)) {
       throw new Error(`${file}: unknown stage \`${meta.stage}\``);
+    }
+    if (meta.argument !== undefined && !ARGUMENT_SOURCES.includes(meta.argument)) {
+      throw new Error(
+        `${file}: unknown \`argument\` source \`${meta.argument}\`; ` +
+          `expected one of ${ARGUMENT_SOURCES.join(', ')}`,
+      );
     }
 
     const existing = providers.get(meta.stage);
