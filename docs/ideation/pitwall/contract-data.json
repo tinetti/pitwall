@@ -1,0 +1,369 @@
+{
+  "projectName": "Pitwall",
+  "slug": "pitwall",
+  "date": "2026-08-24",
+  "status": "Approved",
+  "gates": {
+    "dimensions": [
+      {
+        "key": "problem",
+        "label": "Problem Clarity",
+        "status": "ready",
+        "evidence": "The user's stated 7-beat flow spans three tools (ideation, OpenSpec, superpowers) and four-plus sessions with nothing computing where the work stands; the model-routing commands that partially solve it (~/.claude/commands/spec/*.md) were found to be in no git repo at all."
+      },
+      {
+        "key": "goals",
+        "label": "Goal Definition",
+        "status": "ready",
+        "evidence": "Four measurable goals fixed in interview: correct stage named at 7/7 beats, model+effort sourced from a manifest for 100% of stages, provider swap costs exactly 1 file edit and 0 wrapper edits, and the worktree beat reduced to 1 command."
+      },
+      {
+        "key": "criteria",
+        "label": "Success Criteria",
+        "status": "ready",
+        "evidence": "Eight criteria carry runnable commands with positive twins (fixture-count anchor, no-hardcoded-model grep, one-file-diff swap assertion, zero-dependency probe) and one is an explicit judgment call naming which beats required a lookup."
+      },
+      {
+        "key": "scope",
+        "label": "Scope Boundaries",
+        "status": "ready",
+        "evidence": "v1 is status/next/start plus provider manifests; --auto drive mode is explicitly deferred to v2; the inner TDD loop, merge mechanics, and the interview itself are explicitly owned by existing tools and excluded."
+      },
+      {
+        "key": "consistency",
+        "label": "Consistency",
+        "status": "ready",
+        "evidence": "The one tension found -- 'no state file' versus 'every stage is pluggable', since inference facts are provider-specific -- was resolved by moving the detector into the provider manifest so it swaps atomically with the command."
+      }
+    ]
+  },
+  "problem": [
+    "A single change moves through seven beats -- rough ideation, branch and worktree, refined ideation, contract, specs, execute specs 1..n, cleanup -- spanning three separate tool ecosystems and at least four Claude sessions. No tool models the arc. Each session boundary costs a manual re-orientation: which stage is this, which command comes next, which model does it want, and does the work live in the main checkout or a worktree.",
+    "Two beats are modeled by nothing at all. The branch-and-worktree moment, which the user's own AGENTS.md mandates for feature work, is invoked by no planning tool -- gwt is a zsh function nothing calls. And no command ends by naming its successor, so the baton is carried in the user's head across a /clear that deliberately erases everything else.",
+    "The partial fix already in place is unmanaged and fragile: ~/.claude/commands/spec/{explore,propose,apply,archive}.md encode which model runs which stage, and they exist in no git repository -- one disk failure from gone, and unreproducible on a second machine."
+  ],
+  "goals": [
+    "At each of the 7 beats, one command names the current stage, the next command, and the model plus effort it wants -- zero notes consulted, zero recall required.",
+    "100% of stages source their model and effort from a declarative provider manifest rather than from the operator's memory.",
+    "Replacing the tool bound to any pluggable stage costs exactly 1 manifest file edit and 0 edits to Pitwall itself.",
+    "The branch-and-worktree beat reduces to a single command that is idempotent and correct from either the main checkout or an existing worktree."
+  ],
+  "successCriteria": [
+    {
+      "criterion": "Stage inference resolves the correct beat from repository reality at all 7 beats, including mid-execute n-of-N progress.",
+      "check": {
+        "cmd": "node --test tests/inference.test.js && test \"$(ls tests/fixtures | wc -l)\" -eq 7",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "The baton names the command, model, and effort declared in that stage's provider manifest, and no model name is hardcoded anywhere in Pitwall's source.",
+      "check": {
+        "cmd": "node --test tests/baton.test.js && grep -rqE '(opus|sonnet|haiku)' providers/ && ! grep -rqE '(opus|sonnet|haiku)' src/",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "Swapping a provider costs exactly one manifest file edit and zero edits to Pitwall's source: the swap fixture asserts a working-tree diff of exactly 1 path, under providers/.",
+      "check": {
+        "cmd": "node --test tests/provider-swap.test.js",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "The worktree beat creates one worktree at the sibling-path convention, is idempotent on re-run, is a no-op inside the target worktree, and falls back correctly when the repo has no origin remote.",
+      "check": {
+        "cmd": "node --test tests/worktree.test.js",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "The gitignore preflight detects every workflow artifact path that git check-ignore matches in the host repo and stays silent on a clean repo (fixture pair: ignored must be reported, clean must be silent).",
+      "check": {
+        "cmd": "node --test tests/preflight-gitignore.test.js",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "Every declared command file exists and parses, and the plugin manifest lists exactly the shipped commands.",
+      "check": {
+        "cmd": "node --test tests/commands.test.js",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "Pitwall ships zero third-party npm runtime dependencies and needs no build step (external CLIs are a separate, declared category and are stubbed in fixtures).",
+      "check": {
+        "cmd": "node -e 'const p=require(\"./package.json\");process.exit((Object.keys(p.dependencies||{}).length===0 && !(p.scripts||{}).build)?0:1)'",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "The full self-test suite passes from a clean checkout.",
+      "check": {
+        "cmd": "node --test tests/",
+        "expect": "exits 0"
+      }
+    },
+    {
+      "criterion": "One real change is driven root-to-merged-PR through Pitwall; the operator lists which of the 7 beats, if any, required consulting notes.",
+      "check": {
+        "judgment": "Operator runs a real change end to end and names the beats that required a lookup; pass at zero beats."
+      }
+    }
+  ],
+  "scope": {
+    "mvp": [
+      {
+        "item": "Stage inference core -- derive the current beat from git state, worktree presence, and provider detectors",
+        "reason": "Every other feature renders this; it is what replaces the rejected state file."
+      },
+      {
+        "item": "Provider manifests: markdown with flat scalar-only frontmatter, body used verbatim as baton text, and a bounded two-key detector (doneWhenPathExists glob, optional doneWhenCmd judged by exit code)",
+        "reason": "The detector must swap with the provider; bounding it declaratively prevents an expression evaluator growing inside a data file."
+      },
+      {
+        "item": "/pitwall:next -- one surface printing current beat, completed beats, n-of-N execute progress, and the baton (command, model, effort, whether to /clear)",
+        "reason": "Goal 1 names one command; a second rendering of the same inference result is traced to no goal."
+      },
+      {
+        "item": "/pitwall:start -- branch and worktree creation at the direction-known beat",
+        "reason": "The beat no existing tool models, and the anchor that lets inference locate later artifacts."
+      },
+      {
+        "item": "Gitignore preflight -- report every workflow artifact path that git check-ignore matches in the host repo",
+        "reason": "Untracked artifacts die when /mar removes the worktree; this makes the host-repo hazard a product feature instead of an untestable assertion."
+      },
+      {
+        "item": "Cleanup baton to a manifest-configured target (default /mar)",
+        "reason": "Goal 1 claims 7/7 beats, so the seventh cannot sit in a later tier; /mar is a personal dotfile, so the target must be declarative."
+      },
+      {
+        "item": "Built-in provider manifests for ideation and OpenSpec",
+        "reason": "One manifest per pluggable stage is what day-one operation needs."
+      },
+      {
+        "item": "Self-test suite over temp-repo fixtures frozen at each of the 7 beats",
+        "reason": "User-chosen mechanical gate; what makes the inference safe to refactor."
+      }
+    ],
+    "full": [
+      {
+        "item": "/pitwall:status as a separate position-without-baton surface",
+        "reason": "Promote only if the combined /pitwall:next output proves too dense in the acceptance run."
+      },
+      {
+        "item": "superpowers provider manifest for the execute beat",
+        "reason": "A second binding for an already-bound stage; it becomes the first real exercise of the 1-file-edit swap."
+      },
+      {
+        "item": "Vendor the four unmanaged ~/.claude/commands/spec/*.md into version control",
+        "reason": "The OpenSpec manifest emits batons pointing at files that exist in no git repo -- the problem statement's own third defect."
+      },
+      {
+        "item": "Packaging as a github-sourced plugin registered in the tinetti marketplace",
+        "reason": "Matches how ideation is installed; makes a second machine a one-line install."
+      },
+      {
+        "item": "pw short alias",
+        "reason": "The most-used commands are typed many times per change."
+      },
+      {
+        "item": "README and install docs naming external prerequisites (openspec CLI, /mar, gh)",
+        "reason": "A standalone repo with undeclared prerequisites is unusable on a second machine."
+      }
+    ],
+    "outOfScope": [
+      {
+        "item": "The inner TDD / implement / review loop",
+        "reason": "OpenSpec apply and superpowers already own it; duplicating it would make Pitwall a competitor rather than a spine."
+      },
+      {
+        "item": "Merge and branch-deletion mechanics",
+        "reason": "/mar already does this well; Pitwall hands off to it."
+      },
+      {
+        "item": "The interview itself",
+        "reason": "ideation's evidence gates and plan critics are better than anything this project would produce."
+      },
+      {
+        "item": "Any persisted state file for workflow position",
+        "reason": "Explicitly rejected -- a second source of truth drifts the first time a stage is done by hand."
+      },
+      {
+        "item": "Non-code workflows (writing, research, ops runbooks)",
+        "reason": "The stage model is built on git and spec artifacts; generalizing now would dilute v1."
+      },
+      {
+        "item": "Cross-machine state sync or telemetry",
+        "reason": "Inference from repository reality is already machine-independent; nothing to sync."
+      },
+      {
+        "item": "Automatically editing a host repo's .gitignore",
+        "reason": "The preflight reports the hazard; un-ignoring someone's repo is their call, and one-shot remediations belong in phase notes."
+      }
+    ],
+    "future": [
+      "--auto drive mode: tmux window plus claude --model <m> -p per stage \u2014 Feasibility confirmed (claude CLI exposes --model, -p, --fork-session) but it is the riskiest surface and the half used least.",
+      "Append-only handoff notes file per change \u2014 Carries decisions and dead ends across sessions; inference does not need it, so it is additive."
+    ],
+    "stretch": []
+  },
+  "decisions": [
+    {
+      "decision": "Build a thin wrapper with pluggable provider holes",
+      "rejected": "Adopt OpenSpec or ideation wholesale as the workflow spine",
+      "reason": "Neither models the worktree beat, per-stage model routing, or the session baton; binding the workflow to one tool makes replacing that tool a rewrite rather than a config edit."
+    },
+    {
+      "decision": "Hybrid authority -- direct (baton) by default, drive (--auto) available later",
+      "rejected": "A pure orchestrator that launches every session itself",
+      "reason": "Baton mode is the half used every day and needs no new infrastructure; a session launcher is the piece most likely to need iteration and the piece whose crashes the operator must debug."
+    },
+    {
+      "decision": "Infer stage from repository reality; ship no state file",
+      "rejected": "A .pitwall/state.json recording stage, providers, and history",
+      "reason": "A second source of truth drifts the moment a stage is done by hand, and inference stays correct even when the operator bypasses the wrapper entirely."
+    },
+    {
+      "decision": "Each provider manifest carries its own done-detector",
+      "rejected": "Pitwall hardcodes detectors for the tools it knows about",
+      "reason": "Inference facts are provider-specific (contract-data.json implies ideation); a hardcoded detector would make 'every stage is a hole' false, since swapping a provider would silently break stage resolution."
+    },
+    {
+      "decision": "Pitwall owns the worktree beat and the cleanup handoff outright",
+      "rejected": "Making worktree and cleanup pluggable like the other stages",
+      "reason": "They are the two beats no existing tool models, and the worktree is the anchor that lets inference locate every later artifact -- pluggable anchors cannot be relied on."
+    },
+    {
+      "decision": "One baton per spec/phase during execute",
+      "rejected": "One baton for the whole execute stage; one baton per task",
+      "reason": "A phase is roughly one session's worth of context; whole-stage cannot report 3-of-9 progress, and per-task churns sessions for a 10+ item tasks.md."
+    },
+    {
+      "decision": "v1 ships baton mode and the worktree beat; --auto is deferred",
+      "rejected": "Shipping drive mode in v1",
+      "reason": "The inference model is the load-bearing idea and must be proven before a session launcher is layered on top of it."
+    },
+    {
+      "decision": "A self-test recipe over temp-repo fixtures is the mechanical gate",
+      "rejected": "No pre-check (the real run is the test); manual dry-run only",
+      "reason": "A broken detector would otherwise surface mid-change, and fixtures are what make the inference safe to refactor later."
+    },
+    {
+      "decision": "Standalone repo tinetti/pitwall, registered in the marketplace as a github-sourced plugin",
+      "rejected": "plugins/pitwall in the claude-plugins marketplace; files/home/.claude in tinetti_dev_tools",
+      "reason": "Cleanest boundary and independent versioning; a marketplace-sibling worktree would land inside the directory Claude Code scans for marketplaces."
+    },
+    {
+      "decision": "Name it Pitwall, with pw as the short alias",
+      "rejected": "wot, stint, pacenote",
+      "reason": "The pit wall calls strategy and decides who drives what and when, which is exactly the model-routing and stage-sequencing role; wot and stint were considered and set aside after direct comparison."
+    },
+    {
+      "decision": "Workflow artifacts must be tracked in git, not gitignored",
+      "rejected": "Leaving openspec/ and ideation docs ignored as they are today in tinetti_dev_tools",
+      "reason": "Untracked files do not travel to a new worktree and are destroyed when /mar removes it, so the change folder would vanish at exactly the moment the PR needs it."
+    },
+    {
+      "decision": "Zero third-party runtime dependencies; node --test as the harness",
+      "rejected": "A test framework plus a YAML library",
+      "reason": "A workflow tool that must run in any repo on any machine cannot carry an install step; frontmatter parsing is small enough to own."
+    },
+    {
+      "decision": "Provider manifests are markdown with flat scalar-only frontmatter; the parser is capped at key: value and the body is the baton text",
+      "rejected": "General YAML (library or hand-rolled) and pure JSON manifests",
+      "reason": "Critic showed nothing outside Pitwall's loader reads these files, so the md+frontmatter 'idiom' argument buys only familiarity -- but the body doubling as baton prose earns the markdown; capping the parser removes the YAML edge cases from the blocking phase."
+    },
+    {
+      "decision": "Detectors are two declarative keys judged by path glob or exit code",
+      "rejected": "Arbitrary predicate logic or shell-eval inside the manifest",
+      "reason": "An unbounded detector is a plugin execution runtime no goal asks for; goal 3 only needs the detector to swap with its provider."
+    },
+    {
+      "decision": "One command surface: /pitwall:next prints position and baton together",
+      "rejected": "Shipping /pitwall:status as a separate MVP command",
+      "reason": "Two lenses independently found status traced to no goal and covered by no criterion, while duplicating rendering, alias, manifest and README surface."
+    },
+    {
+      "decision": "The openspec CLI is a declared external dependency with a tasks.md checkbox fallback detector",
+      "rejected": "Treating openspec status --json as ambiently available",
+      "reason": "It appeared in phase notes but in no goal, scope item, or prereq, and it silently contradicted the zero-dependency claim; the JSON shape is unverified, so a fallback is required."
+    },
+    {
+      "decision": "Worktree path resolution (findMainWorktree, resolveWorktreePath) lands in phase 1, consumed by both inference and the worktree command",
+      "rejected": "Phases 2 and 4 running parallel with the sibling-path derivation living in phase 4",
+      "reason": "The contract calls the worktree the anchor for inference, so phase 2's detectors need the derivation phase 4 was going to implement -- a circular dependency declared as parallelism."
+    },
+    {
+      "decision": "The gitignore hazard becomes a shipped preflight, not an acceptance assertion",
+      "rejected": "tests/artifacts-tracked.test.js as the check for artifact tracking",
+      "reason": "It asserts a host-repo property that Pitwall's own fixtures cannot observe -- a git init fixture with no .gitignore passes for free while the real repo still loses the change folder."
+    },
+    {
+      "decision": "The cleanup baton ships in MVP with a manifest-configured target defaulting to /mar",
+      "rejected": "Cleanup in the Full tier with /mar hardcoded",
+      "reason": "Goal 1 claims 7/7 beats so the seventh cannot sit in a later tier, and /mar is a personal dotfile pair plus gh/jq -- installing the plugin alone would emit a baton to a command that does not exist."
+    },
+    {
+      "decision": "MVP ships two built-in manifests (ideation, OpenSpec); superpowers moves to Full",
+      "rejected": "Three built-in manifests in MVP",
+      "reason": "superpowers is a second candidate for an already-bound beat; deferring it makes it the first real test of the one-file-edit swap promise."
+    }
+  ],
+  "execution": {
+    "strategy": "Hybrid",
+    "phases": [
+      {
+        "title": "Scaffold, manifest format, and repo-shape helpers",
+        "risk": "low",
+        "blocking": true,
+        "specPath": "docs/ideation/pitwall/spec-phase-1.md",
+        "notes": "package.json with engines.node (no dependencies, no build script), capped flat-frontmatter parser, provider manifest schema + loader with bounded detectors, findMainWorktree/resolveWorktreePath helpers consumed by phases 2 and 4, and a capability probe verifying openspec status --json exists and recording the field names inference reads. No plugin.json here -- packaging is phase 5. Write phase 2's fixtures directly rather than designing a shared harness up front."
+      },
+      {
+        "title": "Stage inference core",
+        "risk": "medium",
+        "blocking": true,
+        "prereqs": [
+          "Scaffold, manifest format, and repo-shape helpers"
+        ],
+        "specPath": "docs/ideation/pitwall/spec-phase-2.md",
+        "notes": "Resolve the current beat from git state, worktree presence, and provider detectors; n-of-N execute progress via openspec status --json with a tasks.md checkbox fallback when the CLI is absent. Ships the built-in ideation and OpenSpec manifests. The load-bearing phase."
+      },
+      {
+        "title": "Baton command and gitignore preflight",
+        "risk": "low",
+        "blocking": false,
+        "prereqs": [
+          "Stage inference core"
+        ],
+        "specPath": "docs/ideation/pitwall/spec-phase-3.md",
+        "notes": "/pitwall:next renders position plus baton with model/effort routing sourced only from manifests; gitignore preflight surfaces artifact paths matched by git check-ignore. Parallel with phase 4."
+      },
+      {
+        "title": "Worktree beat",
+        "risk": "medium",
+        "blocking": false,
+        "prereqs": [
+          "Stage inference core"
+        ],
+        "specPath": "docs/ideation/pitwall/spec-phase-4.md",
+        "notes": "/pitwall:start using phase 1's path helpers. Reference implementation is files/zsh/git.zsh:267-288 in tinetti_dev_tools, which assumes an origin remote and origin/<default> base -- specify the remote-less fallback (base = current HEAD, skip fetch). Idempotent, and a no-op inside the target worktree. Parallel with phase 3."
+      },
+      {
+        "title": "Cleanup baton, packaging, and adoption",
+        "risk": "low",
+        "blocking": false,
+        "prereqs": [
+          "Baton command and gitignore preflight",
+          "Worktree beat"
+        ],
+        "specPath": "docs/ideation/pitwall/spec-phase-5.md",
+        "notes": "Cleanup baton to the manifest-configured target; vendor the four unmanaged spec/*.md commands; pw alias; README naming external prerequisites. Packaging prereqs: create and push github.com/tinetti/pitwall (the local repo has no origin and no commits), then clone tinetti/claude-plugins and hand-write a github-sourced entry in .claude-plugin/marketplace.json -- sync-marketplace.ts preserves object-source entries rather than generating them. One-time: un-ignore openspec/ in tinetti_dev_tools before the acceptance run."
+      }
+    ]
+  },
+  "approvalMode": "express",
+  "branch": "ideation/pitwall"
+}
