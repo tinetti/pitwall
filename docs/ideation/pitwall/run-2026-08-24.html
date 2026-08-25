@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Pitwall — Run Report 2026-08-24</title>
+    <script>
+      // Apply a saved forced theme before first paint to avoid a flash
+      try {
+        const saved = localStorage.getItem('ideation-run-report-theme');
+        if (saved === 'light' || saved === 'dark')
+          document.documentElement.dataset.theme = saved;
+      } catch {}
+    </script>
+    <style>
+/* ═══════════════════════════════════════════════════════════════════
+   Run report — the post-flight document.
+
+   THESIS   A run report is read after the machine has stopped, by
+            someone who was not watching. Its job is to make the run
+            impossible to misread: what landed, what nobody reviewed,
+            and every finding that would otherwise have died in a
+            transcript. So warnings lead, and nothing is decorative.
+   WORLD    The ideation field guide — DESIGN.md is the token
+            authority, scripts/contract-gen.css is the canonical
+            declaration. Paper ground, ink, ONE cobalt accent, serif
+            display, letterpress offset, hairline rules, 3px radii.
+            Graphite dark deck, never navy.
+   REGISTER Serif carries headings and prose. Mono is evidence only:
+            commit hashes, the VERIFY line, counts. A heading in mono
+            would be a lapse.
+   MOTION   None authored. This document reports on something already
+            finished; animating it would imply it is still moving.
+            State changes only, under 160ms.
+
+   Inlined into every generated report by run-report-gen.ts at
+   generation time. Self-contained: no fonts, no CDNs, no images —
+   reports are opened over file:// with no network.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Auto: follow the system. The masthead toggle forces a deck by
+     setting data-theme, which pins color-scheme and resolves every
+     light-dark() below. */
+  color-scheme: light dark;
+
+  /* ── Palette ─────────────────────────────────────────────────
+     light-dark(paper deck, graphite deck). Values are DESIGN.md's
+     table, so a run report looks like the contract it reports on. */
+  --bg: light-dark(#f7f7f3, #131417);
+  --surface-1: light-dark(#fcfcfa, #1a1c20);
+  --surface-2: light-dark(#ffffff, #202329);
+  --wash: light-dark(#ebebe4, #0c0d0f);
+  --line: light-dark(#dededf, #2d3036);
+  --line-strong: light-dark(#a6a6a0, #4c505a);
+  --ink: light-dark(#191b1d, #e9e9e4);
+  --muted: light-dark(#50555a, #a8aaa6);
+  --faint: light-dark(#75797d, #82858a);
+
+  --accent: light-dark(#2b46c7, #93a7ff);
+  --accent-tint: light-dark(#e6eafb, #1e2542);
+  --go: light-dark(#187a48, #63bf8d);
+  --go-tint: light-dark(#e0f0e7, #15291e);
+  --caution: light-dark(#94660a, #d2ad55);
+  --caution-tint: light-dark(#f5ecd2, #2b2513);
+  --danger: light-dark(#bb3a2c, #e0796e);
+  --danger-tint: light-dark(#f8e2de, #331714);
+
+  /* Letterpress: an offset, no blur. The world's depth device. */
+  --press: 3px 3px 0 0 var(--line);
+
+  /* ── Type ────────────────────────────────────────────────────
+     Serif = voice. Sans = interface furniture. Mono = evidence. */
+  --font-serif:
+    'Iowan Old Style', 'Palatino Nova', Palatino, 'Book Antiqua', Georgia,
+    'Times New Roman', serif;
+  --font-mono:
+    'Berkeley Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, Consolas,
+    monospace;
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+    sans-serif;
+
+  --t-kicker: 0.6875rem;
+  --t-meta: 0.75rem;
+  --t-data: 0.8125rem;
+  --t-small: 0.875rem;
+  --t-body: 1rem;
+  --t-lead: 1.125rem;
+  --t-h3: 1.25rem;
+  --t-h2: 1.75rem;
+  --t-display: clamp(2.25rem, 5.5vw, 3.5rem);
+  --t-figure: clamp(1.75rem, 4vw, 2.5rem);
+
+  /* ── Space (4pt) ─────────────────────────────────────────── */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 72px;
+
+  --radius: 3px;
+  --radius-lg: 4px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --measure: 68ch;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+}
+:where(button, summary):focus-visible,
+:where(a, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+.wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding-inline: var(--s6);
+}
+/* ── Voices ────────────────────────────────────────────────── */
+
+/* Reserved for labels on measurements and for the stamps. Not an
+   eyebrow over every section — sections get real serif heads. */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--t-kicker);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Letterpress stamp — the run's verdict, worn like a rubber stamp. */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: var(--s1) var(--s3);
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+.stamp::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.is-go {
+  color: var(--go);
+}
+.is-caution {
+  color: var(--caution);
+}
+.is-danger {
+  color: var(--danger);
+}
+
+/* Inline chips — small facts that ride next to text. Flat, hairline.
+   Every tinted chip also carries its word, never colour alone. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--t-kicker);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.chip-go {
+  color: var(--go);
+  border-color: currentColor;
+  background: var(--go-tint);
+}
+.chip-caution {
+  color: var(--caution);
+  border-color: currentColor;
+  background: var(--caution-tint);
+}
+.chip-danger {
+  color: var(--danger);
+  border-color: currentColor;
+  background: var(--danger-tint);
+}
+
+/* ── Masthead ──────────────────────────────────────────────── */
+
+.masthead {
+  padding-block: var(--s7);
+  border-top: 0;
+}
+.masthead-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+.masthead-slug {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+/* The mark: a rotated square, the same glyph as the plugin's favicon. */
+.masthead-mark {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  flex: 0 0 auto;
+}
+.masthead h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-display);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  max-width: 18ch;
+}
+.masthead-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+  text-align: right;
+  flex: 0 0 auto;
+}
+.masthead-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+}
+.theme-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: var(--s1);
+  padding: 0;
+  color: var(--faint);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.theme-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+}
+.theme-toggle,
+.copy,
+.links a {
+  /* The only motion in the document: a state change, under 160ms. */
+  transition:
+    color 0.14s var(--ease),
+    background-color 0.14s var(--ease),
+    border-color 0.14s var(--ease);
+}
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  display: none;
+}
+.theme-toggle[data-mode='auto'] .i-auto,
+.theme-toggle[data-mode='light'] .i-light,
+.theme-toggle[data-mode='dark'] .i-dark {
+  display: block;
+}
+
+/* The lede — one sentence stating how the run ended. */
+.masthead-lede {
+  margin: var(--s5) 0 0;
+  font-size: var(--t-lead);
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+.masthead-lede strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Flight strip ──────────────────────────────────────────
+   The measured outcome of the run. One bordered strip of cells,
+   not a row of floating cards. */
+
+/* The cell separators are the grid's own 1px gaps with the rule
+   colour showing through — not per-cell borders. The strip wraps at
+   narrow widths, and a wrapped row's borders cannot be addressed by
+   :first-child, so the gap does the job at every column count. */
+.flightstrip {
+  margin-top: var(--s6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(184px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--line);
+  box-shadow: var(--press);
+  overflow: hidden;
+}
+.fs-cell {
+  padding: var(--s4) var(--s4) var(--s3);
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+.fs-figure {
+  font-family: var(--font-mono);
+  font-size: var(--t-figure);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.fs-figure .fs-of {
+  font-size: 0.5em;
+  color: var(--faint);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.fs-note {
+  font-family: var(--font-sans);
+  font-size: var(--t-meta);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Outcome meter — one segment per phase, in run order, drawn to
+   scale. Colour is never the only signal: the note spells the
+   counts out in words next to it. */
+.meter {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin-top: var(--s1);
+}
+.meter span {
+  flex: 1;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+.meter .m-pass {
+  background: var(--go);
+}
+.meter .m-warn {
+  background: var(--caution);
+}
+.meter .m-fail {
+  background: var(--danger);
+}
+
+/* ── Section furniture ─────────────────────────────────────── */
+
+.band {
+  padding-block: var(--s8);
+  border-top: 1px solid var(--line);
+}
+.band-wash {
+  background: var(--surface-1);
+}
+.sec-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s5);
+  margin-bottom: var(--s6);
+  flex-wrap: wrap;
+}
+.sec-head h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  line-height: 1.15;
+}
+.sec-sub {
+  margin: var(--s2) 0 0;
+  font-size: var(--t-small);
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+.sec-count {
+  font-family: var(--font-mono);
+  font-size: var(--t-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Warnings ──────────────────────────────────────────────
+   The band that leads the document, because the failure this whole
+   artifact exists to prevent is a run that reads clean when it was
+   not. Tinted ground plus a glyph plus the phase name — three
+   signals, so none of them is load-bearing alone. */
+
+.warnband {
+  border-top: 3px solid var(--caution);
+  background: var(--caution-tint);
+}
+.warnband.is-severe {
+  border-top-color: var(--danger);
+  background: var(--danger-tint);
+}
+.warnstrip {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--press);
+  overflow: hidden;
+}
+.warn-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--wash);
+  border-block-end: 1px solid var(--line);
+}
+/* A second group opening under the rows of the first needs its own rule;
+   the first one sits against the strip's border and must not double it. */
+.warn-row + .warn-group-head {
+  border-block-start: 1px solid var(--line);
+}
+.warn-group-head h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.warn-group-head p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-meta);
+  color: var(--muted);
+}
+.warn-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-block-start: 1px solid var(--line);
+}
+/* A group head already draws the rule under itself. */
+.warn-group-head + .warn-row {
+  border-block-start: 0;
+}
+.warn-glyph {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--caution);
+}
+.warn-row.is-severe .warn-glyph {
+  color: var(--danger);
+}
+.warn-phase {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+.warn-text {
+  margin: var(--s2) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-data);
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: var(--measure);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+/* ── Phases ────────────────────────────────────────────────
+   One bordered strip of cells per phase, then its prose beneath.
+   Cards would float; a run is a sequence. */
+
+.phase {
+  margin-top: var(--s6);
+}
+.phase:first-of-type {
+  margin-top: 0;
+}
+.phase-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--line);
+  overflow: hidden;
+}
+.ph-cell {
+  padding: var(--s3) var(--s4);
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+.ph-title h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.ph-index {
+  font-family: var(--font-mono);
+  font-size: var(--t-kicker);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+.ph-val {
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.phase-body {
+  border: 1px solid var(--line-strong);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--press);
+  padding: var(--s4);
+}
+.phase-summary {
+  margin: 0;
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+/* Findings are the reason this document exists — they are the data
+   that evaporated in the transcript before it. Every one renders. */
+.findings {
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px dashed var(--line);
+}
+.findings-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+.findings ul {
+  margin: var(--s2) 0 0;
+  padding-inline-start: 0;
+  list-style: none;
+}
+.findings li {
+  position: relative;
+  padding-inline-start: var(--s5);
+  margin-top: var(--s2);
+  font-family: var(--font-sans);
+  font-size: var(--t-data);
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: var(--measure);
+  overflow-wrap: anywhere;
+}
+.findings li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--s3);
+  inset-block-start: 0.62em;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+}
+.phase-warn {
+  margin-top: var(--s4);
+  padding: var(--s3);
+  border: 1px solid var(--caution);
+  border-radius: var(--radius);
+  background: var(--caution-tint);
+  font-family: var(--font-sans);
+  font-size: var(--t-data);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.phase-warn + .phase-warn {
+  margin-top: var(--s2);
+}
+
+/* ── Verification ──────────────────────────────────────────── */
+
+.verify {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s4);
+  align-items: start;
+  padding: var(--s5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--press);
+}
+.verify-line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  line-height: 1.6;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.verify-note {
+  margin: var(--s3) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-meta);
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+/* ── Commands ──────────────────────────────────────────────── */
+
+.cmd {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3);
+  background: var(--wash);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  line-height: 1.5;
+  min-width: 0;
+}
+.cmd-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+.copy {
+  position: relative;
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--t-kicker);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 3px var(--s2);
+  cursor: pointer;
+  min-width: 5.4em;
+  text-align: center;
+}
+.copy::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+.copy:hover {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+.copy[data-state='done'] {
+  color: var(--go);
+  border-color: var(--go);
+  background: var(--go-tint);
+}
+
+/* ── Close ─────────────────────────────────────────────────── */
+
+.close {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s5);
+  align-items: center;
+  padding: var(--s6) var(--s5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  box-shadow: var(--press);
+}
+.close h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+}
+.close p {
+  margin: var(--s3) 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-data);
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+.close-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+  text-align: right;
+}
+.links {
+  margin: var(--s5) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.links a {
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+  overflow-wrap: anywhere;
+}
+.links a:hover {
+  border-bottom-color: var(--accent);
+}
+.links .meta {
+  margin-inline-start: var(--s2);
+}
+.review-cmd {
+  margin-top: var(--s5);
+  max-width: 62ch;
+}
+.colophon {
+  padding-block: var(--s6) var(--s8);
+  font-family: var(--font-sans);
+  font-size: var(--t-meta);
+  color: var(--faint);
+  line-height: 1.6;
+}
+.colophon code {
+  font-family: var(--font-mono);
+}
+
+/* ── Responsive ────────────────────────────────────────────
+   No horizontal page scroll at any width: the phase strip becomes a
+   stack, and every measured cell keeps its label. */
+
+@media (max-width: 900px) {
+  .phase-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ph-title {
+    grid-column: 1 / -1;
+  }
+  .verify,
+  .close {
+    grid-template-columns: 1fr;
+  }
+  .close-meta {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    padding-inline: var(--s4);
+  }
+  .band {
+    padding-block: var(--s7);
+  }
+  .phase-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Print — the run report as a paper document ────────────
+   Forced light tokens whatever the deck, controls gone, and a phase
+   never split across a page break: a report read on paper is read
+   by someone auditing what landed. */
+
+@media print {
+  :root,
+  :root[data-theme] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --wash: #f2f2ee;
+    --line: #c9c9c4;
+    --line-strong: #8a8a84;
+    --ink: #000000;
+    --muted: #303336;
+    --faint: #4a4d51;
+    --accent: #1c2f96;
+    --accent-tint: #eceffc;
+    --go: #105934;
+    --go-tint: #eaf2ed;
+    --caution: #6b4a07;
+    --caution-tint: #f6efdb;
+    --danger: #8e2b20;
+    --danger-tint: #f9e6e3;
+    --press: none;
+  }
+  body {
+    font-size: 10.5pt;
+  }
+  .wrap {
+    max-width: none;
+    padding-inline: 0;
+  }
+  .copy,
+  .theme-toggle {
+    display: none !important;
+  }
+  .band {
+    padding-block: 18pt;
+    break-inside: auto;
+  }
+  .flightstrip {
+    overflow: visible;
+  }
+  .warnband {
+    /* The tint is the signal on screen; on paper the rule and the
+       glyphs carry it, because tinted grounds print as grey mush. */
+    background: transparent;
+  }
+  .flightstrip,
+  .fs-cell,
+  .warnstrip,
+  .warn-row,
+  .phase,
+  .phase-strip,
+  .findings li,
+  .phase-warn,
+  .verify,
+  .close {
+    break-inside: avoid;
+  }
+  .links a {
+    color: var(--ink);
+  }
+}
+
+    </style>
+  </head>
+  <body data-run-outcome="clean">
+
+    <header class="band masthead" id="top">
+      <div class="wrap">
+        <div class="masthead-top">
+          <div>
+            <div class="masthead-slug">
+              <span class="masthead-mark" aria-hidden="true"></span>
+              <span class="kicker">run report · pitwall</span>
+            </div>
+            <h1>Pitwall</h1>
+          </div>
+          <div class="masthead-aside">
+            <span class="stamp is-go">clean</span>
+            <div class="masthead-dates">
+              <span class="meta">run 2026-08-24</span>
+              <span class="meta">branch ideation/pitwall</span>
+              <span class="meta">strict · unreviewed code does not land</span>
+            </div>
+            <button type="button" class="theme-toggle" id="theme-toggle" data-mode="auto" aria-label="Colour theme: follow system">
+      <svg class="i-auto" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M8 3v10" /><path d="M8 3a5 5 0 010 10z" fill="currentColor" stroke="none"/></svg>
+      <svg class="i-light" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="3.1"/><path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2L3.1 3.1"/></svg>
+      <svg class="i-dark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13.4 9.8A5.8 5.8 0 016.2 2.6a5.8 5.8 0 107.2 7.2z"/></svg>
+            </button>
+          </div>
+        </div>
+        <p class="masthead-lede">Execution record of the <a href="contract.html">Pitwall contract</a>: <strong>5 of 5 phases completed</strong>. 27 reviewer findings are recorded below.</p>
+        <div class="flightstrip">
+          <div class="fs-cell">
+            <span class="kicker">completed</span>
+            <span class="fs-figure"><span class="num">05</span><span class="fs-of">/5</span></span>
+            <span class="fs-note">every phase in the plan finished</span>
+            <div class="meter" aria-hidden="true"><span class="m-pass"></span><span class="m-pass"></span><span class="m-pass"></span><span class="m-pass"></span><span class="m-pass"></span></div>
+          </div>
+          <div class="fs-cell">
+            <span class="kicker">failed</span>
+            <span class="fs-figure"><span class="num">00</span></span>
+            <span class="fs-note">no phase failed</span>
+          </div>
+          <div class="fs-cell">
+            <span class="kicker">no-op</span>
+            <span class="fs-figure"><span class="num">00</span></span>
+            <span class="fs-note">every phase changed something</span>
+          </div>
+          <div class="fs-cell">
+            <span class="kicker">skipped</span>
+            <span class="fs-figure"><span class="num">00</span></span>
+            <span class="fs-note">nothing was skipped</span>
+          </div>
+          <div class="fs-cell">
+            <span class="kicker">review cycles</span>
+            <span class="fs-figure"><span class="num">08</span></span>
+            <span class="fs-note">across 5 phases · 3 is the cap</span>
+          </div>
+          <div class="fs-cell">
+            <span class="kicker">verify</span>
+            <span class="fs-figure"><span class="num">0</span><span class="fs-of">fail</span></span>
+            <span class="fs-note">commits 5/5 · 8 pass · 1 for a human</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main>
+
+
+    <section class="band" id="phases" aria-labelledby="phases-h">
+      <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="phases-h">Phases</h2>
+          <p class="sec-sub">In run order, with every reviewer finding the run produced. Findings are the data that dies in a transcript — this is the only place they survive.</p>
+        </div>
+        <span class="sec-count">5 phases</span>
+      </div>
+      <article class="phase">
+        <div class="phase-strip">
+          <div class="ph-cell ph-title">
+            <span class="ph-index">phase 01</span>
+            <h3>Scaffold, manifest format, and repo-shape helpers</h3>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">result</span>
+            <span><span class="chip chip-go">PASS</span></span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">review</span>
+            <span class="ph-val">passed</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">commit</span>
+            <span class="ph-val">10b96da3f7adaa2a797dcf1ad38a4697d1559073</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">cycles</span>
+            <span class="ph-val num">1</span>
+          </div>
+        </div>
+        <div class="phase-body">
+          <p class="phase-summary">Built the Pitwall phase-1 substrate TDD-style: a capped `key: value` frontmatter parser that throws on lists/indents/block scalars/duplicate keys, a provider-manifest loader with two declarative detectors (glob + exit code, both must pass when both present), git repo-shape helpers porting the `gwt` sibling-path convention (zero-commit- and submodule-safe), a never-throwing `openspec` capability probe, and a composable temp-repo test fixture — 79 tests, all green, zero dependencies, no build step. Note: `node --test tests/` fails on Node 26 (a bare directory positional is no longer expanded), so `tests/index.js` was added as a documented entry shim to keep the spec's validation command working on both Node 22 and 26; also, the repo has zero commits, so `git diff HEAD` errors — the review diff must be read via `git diff` (all files are intent-to-add). Forward risk for phase 2: its planned `ideate` manifest has no `doneWhen*` key, which this loader rejects by design per the phase-1 spec. — Phase 1 is implemented faithfully: no build step, zero runtime dependencies, `node --test` as the harness, the capped frontmatter parser that throws on lists/nesting/block scalars/duplicate keys, the provider loader with required-key + missing-detector + duplicate-stage rejection, the repo helpers, and the never-throwing openspec probe. The `resolveWorktreePath` derivation matches the cited `gwt` pattern exactly (`${dirname}/${basename}-${branch//\\//-}`, git.zsh:279), and every &quot;Key test case&quot; the spec names — literal `---` in the body, `feat/a/b` flattening, zero-commit repos, submodule exclusion, stubbed openspec — has a corresponding assertion. No critical or high findings; the ten items are hardening and documentation (undeclared `tests/index.js`, the shell-exec trust boundary of `doneWhenCmd`, and an unpruned `**` walk being the notable three). Ready to commit. Caveat: per the reviewer's git-only Bash restriction I did not execute `node --test tests/`, so the suite's green status is asserted from reading, not from a run.</p>
+          <div class="findings">
+            <div class="findings-head">
+              <span class="kicker">findings</span>
+              <span class="meta">10</span>
+            </div>
+            <ul>
+              <li>medium/spec-deviation /Users/tinetti/Projects/pitwall/tests/index.js:1 — Undeclared file: the spec's File Changes table lists no `tests/index.js`, and its rationale (&quot;Node 26 resolves a directory argument to its index.js&quot;) is an unverified runtime claim; if the file ever IS matched by default discovery, every suite runs twice → Either remove it and rely on `node --test tests/` (the spec's own Validation Command), or add it to the spec's File Changes with the Node-version evidence that justifies it.</li>
+              <li>medium/security /Users/tinetti/Projects/pitwall/src/providers.js:146 — `detectCmd` runs manifest-supplied strings with `shell: true` in the repository cwd, and the spec requires `.gitignore` to NOT ignore `providers/`, implying manifests are repo-tracked; a hostile clone therefore gets arbitrary shell execution during ordinary inference → Record the trust boundary explicitly (JSDoc + an Open Item in the spec) and decide in phase 2 whether `doneWhenCmd` may come from repo-tracked manifests or only from a user-owned providers directory.</li>
+              <li>medium/performance /Users/tinetti/Projects/pitwall/src/providers.js:110 — the `**` branch of `walk` recurses the entire tree with no depth cap and no pruning of `.git`/`node_modules`; detectors are evaluated per beat on every inference, so one `**/tasks.md` manifest turns each run into a full-repo stat walk → Prune `.git` and `node_modules` (or cap depth) in `readdirSafe`/`walk`, and add a test asserting a `**` pattern does not descend into `.git`.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/src/providers.js:125 — `**` cross-segment matching exceeds the spec's description of `doneWhenPathExists` (&quot;a glob resolved relative to the repo root&quot;, `*` only in the contract example); the supported dialect is now defined solely by the implementation → Document the exact supported dialect (`*`, `?`, `**`) in the phase-1 spec's Provider section, or drop `**` until a manifest needs it.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/frontmatter.js:50 — the no-frontmatter early return yields `body: source` (the raw text) while the fenced path yields BOM-stripped, LF-normalized text, so an un-fenced CRLF manifest produces a differently-normalized baton body → Return `body: text` for consistency and add a test for an un-fenced CRLF source.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/frontmatter.js:88 — a `__proto__: value` line is silently dropped: `hasOwnProperty` is false and assigning a string to `__proto__` on an object literal is a no-op, so the key vanishes instead of being rejected — this contradicts the stated &quot;reject rather than ignore&quot; rule → Build `meta` with `Object.create(null)` (or reject `__proto__` explicitly) and add a rejection/round-trip test.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/providers.js:34 — the bare `catch { return new Map(); }` around `readdirSync` maps EACCES and ENOTDIR to &quot;no providers configured&quot;, hiding a real misconfiguration behind the same result as a missing directory → Narrow to `err.code === 'ENOENT'` and rethrow anything else.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/frontmatter.js:74 — `raw.trimStart().startsWith('- ')` and `raw.trim() === '-'` are unreachable in their trimmed form because line 71 already throws on any leading whitespace → Simplify to `raw.startsWith('- ') || raw === '-'` so the two rejection paths do not appear to overlap.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/repo.js:99 — `git rev-parse --path-format=absolute` requires git &gt;= 2.31, an undeclared dependency alongside `engines.node &gt;= 22.0.0`; on older git the flag errors, `tryGit` returns null, and `inWorktree` silently reports false inside a real linked worktree → Note the minimum git version in the module JSDoc (and package.json engines or README) so the silent-false mode is traceable.</li>
+              <li>low/testing /Users/tinetti/Projects/pitwall/tests/repo.test.js:222 — the &quot;never throws when the CLI hangs&quot; case burns a real 2s of wall clock (the 2000ms probe timeout) and leaves an orphaned `sleep 30`, which is the whole suite's slowest case → Make the probe timeout injectable (or have the stub sleep just past a shorter injected timeout) so the hang path is still covered without the fixed 2s cost.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+      <article class="phase">
+        <div class="phase-strip">
+          <div class="ph-cell ph-title">
+            <span class="ph-index">phase 02</span>
+            <h3>Stage inference core</h3>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">result</span>
+            <span><span class="chip chip-go">PASS</span></span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">review</span>
+            <span class="ph-val">passed</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">commit</span>
+            <span class="ph-val">c8d4336e3aa6d3a91a139e693e6cf83b363933bd</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">cycles</span>
+            <span class="ph-val num">2</span>
+          </div>
+        </div>
+        <div class="phase-body">
+          <p class="phase-summary">Implemented the stage-inference core: the fixed seven-beat model (src/beats.js) with wrapper-owned worktree/cleanup detectors, resolveBeat's ordered walk with completed/skipped/warnings/branch/changeId (src/inference.js), dual-source execute progress with openspec-CLI-first and a fence-aware tasks.md fallback (src/progress.js), changeStatus on src/openspec.js, five provider manifests, seven beat fixtures, and 38 new tests. Both spec validation commands pass (117 tests, 0 fail). — All ten cycle-1 findings are fixed: `resolveBeat` now anchors on `superprojectRoot` (walked to the outermost superproject) and warns, with a submodule case in the test suite; `openspec-execute.md` carries `effort: high`; `skipped` excludes the current beat and the two contradicting spec lines were reconciled; `providerIsDone` delegates to `evaluateProvider`; the all-seven-complete terminal state, the CLI-change-id adoption, the `openspecAvailable` split, the narrowed &quot;never throws&quot; doc, the `cleanupIsDone` convention caveat, and the alphabetical `tests/index.js` import are all in place. What remains is five non-blocking items — chiefly a divergence between the execute manifest's grep detector and `progress.js`'s fence-stripping counter, and the untested nested-submodule walk that the cycle-1 fix introduced. Verdict: PASS, ready to commit.</p>
+          <div class="findings">
+            <div class="findings-head">
+              <span class="kicker">findings</span>
+              <span class="meta">5</span>
+            </div>
+            <ul>
+              <li>medium/logic /Users/tinetti/Projects/pitwall/providers/openspec-execute.md:7 — the execute detector and the progress counter disagree about what a task checkbox is. `grep -qE '^[[:space:]]*[-*+] \[ \]'` scans the raw file, so an example `- [ ]` inside a fenced block in `tasks.md` keeps the beat incomplete forever (spec-phase-2.md:193's hard-stall mode) while `countTasks` at src/progress.js:48 strips fences and reports `3 of 3` — the baton would print 'beat: execute, 3 of 3'. The separators also differ: the grep demands exactly one space after the bullet, while CHECKBOX at src/progress.js:12 allows `[ \t]+`, so `-  [ ] task` reads as done to the detector and as incomplete to the counter. → Make the manifest detector agree with the counter — either widen the pattern to `[-*+][[:space:]]+\[ \]` and accept the fenced-block gap in a manifest comment, or drop `doneWhenCmd` in favour of a detector that shells out to the same counting code.</li>
+              <li>medium/testing /Users/tinetti/Projects/pitwall/src/repo.js:99 — `superprojectRoot`'s defining behaviour is untested. tests/inference.test.js:223 builds a single-hop submodule, which a one-line `rev-parse --show-superproject-working-tree` would pass identically; the walk-to-the-outermost loop and `MAX_SUBMODULE_DEPTH` are what spec-phase-2.md:194 actually specifies ('walked to the outermost one') and nothing exercises them. `worktreeRoot` and `isMerged` are likewise new exports with no case in tests/repo.test.js (describe blocks stop at `inWorktree`/`probeOpenspec`). → Add a nested-submodule case (`addSubmodule` twice) asserting the anchor is the outermost tree, and direct `superprojectRoot`/`worktreeRoot`/`isMerged` describes to tests/repo.test.js alongside the phase-1 exports they sit with.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/docs/ideation/pitwall/spec-phase-2.md:72 — the Modified Files table still lists only `src/openspec.js`, but the phase also modified `src/repo.js` (three new exports: `superprojectRoot`, `worktreeRoot`, `isMerged`), `src/providers.js` (`evaluateProvider`, `runDetector`), and `tests/index.js`. The builder already edited this spec this cycle to reconcile the `skipped` wording and tick the Open Item, so the table is the one part left stale. → Add the three files and their one-line changes to the Modified Files table.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/docs/ideation/pitwall/spec-phase-2.md:186 — the Manual Testing item ('Run `resolveBeat` against this very repo and confirm it reports the `specs` beat') is false as written from the main checkout: this repo is on `main` with no `pitwall-main` sibling, so `worktreeIsDone` fails and the walk stops at `worktree` with `completed: ['ideate','refine','contract']`. It only reports `specs` from inside the feature worktree. → Either qualify the item ('run from the feature worktree') or restate the expected beat, then tick it.</li>
+              <li>low/pattern-mismatch /Users/tinetti/Projects/pitwall/src/providers.js:168 — the cycle-1 collapse of `providerIsDone` into `evaluateProvider` moved the same problem onto `detectCmd`: `src/` now calls `runDetector` directly everywhere, so the exported `detectCmd` is kept alive only by tests/providers.test.js:138-155, exactly the 'dead in src/, alive in tests' shape the prior finding objected to. → Either drop `detectCmd` and retarget its four assertions at `providerIsDone({doneWhenCmd: ...})`, or state in its doc comment that it is a public helper retained for callers outside this module.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+      <article class="phase">
+        <div class="phase-strip">
+          <div class="ph-cell ph-title">
+            <span class="ph-index">phase 03</span>
+            <h3>Baton command and gitignore preflight</h3>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">result</span>
+            <span><span class="chip chip-go">PASS</span></span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">review</span>
+            <span class="ph-val">passed</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">commit</span>
+            <span class="ph-val">dad422959ed60b7c95a9f8cfb5a986295a79a2e9</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">cycles</span>
+            <span class="ph-val num">2</span>
+          </div>
+        </div>
+        <div class="phase-body">
+          <p class="phase-summary">Implemented phase 3: the pure `renderBaton` renderer (src/baton.js) with golden files for all seven beats plus the all-complete state, the three-outcome `git check-ignore` preflight with glob de-globbing and nested-prefix collapsing (src/preflight.js), and the `pw next` CLI with `--json`, `--help`, and an exit-2 no-git pre-check (src/cli.js), wired to a thin `commands/next.md` slash command. Full suite is green at 176 tests / 0 fail (baseline was 122) and all four spec validation commands pass. — Every blocking item from cycle 1 is fixed: tests/cli.test.js now exists and is registered in tests/index.js, covering exit 0 with byte-exact golden output, one-line no-git guidance on exit 2 with an explicit no-stack-trace assertion, parseable --json, unknown command and unknown `next` option, `--help` after the subcommand, and — the load-bearing case — `IGNORED BY GIT` still reported when run from a subdirectory, which is what proves the preflight is anchored at the repo root; `deglob` now adds the directory slash unless the final segment looks like a file, and the two tests that pinned the old miss are converted into passing cases; `BUILTIN_PROVIDERS` is documented in the spec's Modified Files table; and `commands/next.md` no longer falls back to the operator's cwd. Remaining findings are all non-blocking: one medium where the fixed slash-command guard now runs a shell construct its own `allowed-tools` list does not permit, plus four low-severity consistency and documentation nits. I did not execute the suites (tool restriction limits Bash to git commands), so the verdict rests on reading the diff, the fixtures, and the golden files — the implementation matches the spec's technical approach and is ready to commit once the `allowed-tools` mismatch is settled.</p>
+          <div class="findings">
+            <div class="findings-head">
+              <span class="kicker">findings</span>
+              <span class="meta">5</span>
+            </div>
+            <ul>
+              <li>medium/logic commands/next.md:19 — Regression from the cycle-1 fix: the `:-.` fallback is correctly gone, but the replacement runs `if [ -f &quot;${CLAUDE_PLUGIN_ROOT:-}/src/cli.js&quot; ]; then node ...; else echo ...; fi` while the frontmatter still declares `allowed-tools: Bash(node:*), Bash(test:*), Bash(echo:*)` (next.md:3). Nothing in that allow-list matches a command whose first word is `if` and whose predicate is `[`, so the one shell invocation the slash command exists to make is the one the frontmatter does not permit — the operator gets a permission prompt (or, non-interactively, no block at all) instead of the verbatim baton the Task section promises. The stale `Bash(test:*)` entry suggests the guard was originally written with `test -f`. → Rewrite the invocation as prefix-matchable segments, e.g. `test -f &quot;$CLAUDE_PLUGIN_ROOT/src/cli.js&quot; &amp;&amp; node &quot;$CLAUDE_PLUGIN_ROOT/src/cli.js&quot; next || echo &quot;pitwall: …&quot;`, so each segment matches a declared `Bash(...)` prefix; or drop `Bash(test:*)` and declare whatever the final form actually runs.</li>
+              <li>low/logic src/baton.js:101 — `HANDOFF_LINES[provider.handoff] ?? provider.handoff ?? DEFAULT_HANDOFF` looks up a manifest-supplied string on a plain object literal, so a manifest declaring `handoff: constructor` (or `toString`, `valueOf`, `hasOwnProperty`) resolves to an inherited `Object.prototype` member and renders a function body into the baton instead of the value verbatim — the exact opposite of the spec's rule that &quot;Anything else is rendered verbatim&quot;. src/cli.js:66 already guards this class of bug deliberately (&quot;as a Map so a bare `constructor` on the command line resolves to nothing&quot;); baton.js does not follow its own convention. → Make HANDOFF_LINES a `Map` (or use `Object.hasOwn`/`Object.create(null)`) and add a baton test asserting `handoff: constructor` renders as the literal text `constructor`.</li>
+              <li>low/pattern-mismatch tests/cli.test.js:23 — The `isolated()` git-env guard is duplicated verbatim in tests/cli.test.js:23-35 and tests/preflight-gitignore.test.js:24-36, while every other shared fixture concern (`withPath`, `pathWithout`, `git`, `tempRoot`) lives once in tests/helpers/repo-fixture.js — which already sets `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` for its own subprocesses (repo-fixture.js:9-17). Two copies will drift the first time a third env var needs neutralising. → Move `isolated()` into tests/helpers/repo-fixture.js beside `withPath` and import it from both suites.</li>
+              <li>low/spec-deviation src/preflight.js:4 — The module's public surface is wider than the spec's snippet: `Preflight` is `{ignored, warnings}` where the spec declares `{ignored:string[]}`, and `artifactPaths(providers)` is a second export the File Changes table only describes as `checkIgnored(cwd, paths)`. Both are well-reasoned and documented in place (the three-outcome argument at preflight.js:4-7 is right, and deriving paths from manifests is what makes a swapped provider bring its own artifact directory), but phase 5 consumes this module and the spec it will be written against does not describe this shape. → Record the widened `Preflight` shape and the `artifactPaths` export in the phase handoff notes or the phase-5 spec so the next phase codes against the real interface.</li>
+              <li>low/performance src/cli.js:49 — `next()` resolves the repository root with `worktreeRoot(superprojectRoot(cwd) ?? cwd)` and then hands `cwd` to `resolveBeat`, which immediately repeats both queries at inference.js:67-73 — four extra `git` spawns per `pw next`, and two sources of truth for the anchor if either ever changes. → Either accept the duplication with a comment (the no-git check must precede `resolveBeat`, which never throws), or have `resolveBeat` accept/return the resolved root so the CLI reuses it.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+      <article class="phase">
+        <div class="phase-strip">
+          <div class="ph-cell ph-title">
+            <span class="ph-index">phase 04</span>
+            <h3>Worktree beat</h3>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">result</span>
+            <span><span class="chip chip-go">PASS</span></span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">review</span>
+            <span class="ph-val">passed</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">commit</span>
+            <span class="ph-val">b15b937696a0f02a224478ab78d02ba84ea7deeb</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">cycles</span>
+            <span class="ph-val num">1</span>
+          </div>
+        </div>
+        <div class="phase-body">
+          <p class="phase-summary">Phase 4 ships `pw start`: a new `src/worktree.js` (`startWorktree` + `isInside` + a `WorktreeError` tier for the first mutating git calls in `src/`), the `start` subcommand in `src/cli.js` (which resolves the post-create baton from the *new* worktree, prints the `cd` line around a pure `renderBaton`, and exits 2 with a remedy on failure), a `stage: worktree` manifest, and the `/pitwall:start` slash command. Guards cover idempotence, the inside-the-target no-op, prunable/occupied paths, branch-already-checked-out (including the main checkout), invalid and flag-shaped branch names, unborn HEAD (explicit pre-check, since `git worktree add` silently creates an orphan instead of failing), and unresolvable bases (`origin/&lt;default&gt;` verified, `HEAD` with no fetch when there is no remote). Full suite went 188 → 215 tests, 0 failures; both manual test cases were run against a scratch clone. — Phase 4 lands cleanly: `startWorktree` is a faithful port of `gwt` (/Users/tinetti/tinetti_dev_tools/files/zsh/git.zsh:267-288) with the three added properties the spec demanded — idempotence, the inside-the-target no-op, and the remote-less `HEAD` fallback with the fetch skipped — plus the explicit unborn-HEAD and unset-`origin/HEAD` guards, each carrying an operator-facing remedy. Path derivation is correctly consumed from phase 1's `resolveWorktreePath` rather than re-derived, the `start` subcommand re-runs inference from the *new* tree so the baton names the beat that follows, and `providers/pitwall-worktree.md` supplies the baton while detection stays wrapper-owned in `beats.js`. Test coverage exceeds the spec's list (every required case plus prunable-worktree, occupied-directory, branch-already-checked-out and invalid-name cases), goldens and `tests/index.js` were updated consistently, and no critical or high findings remain — ready to commit; the four notes above are polish, with the `$ARGUMENTS` quoting rationale in commands/start.md worth correcting before phase 5 packages the plugin.</p>
+          <div class="findings">
+            <div class="findings-head">
+              <span class="kicker">findings</span>
+              <span class="meta">4</span>
+            </div>
+            <ul>
+              <li>medium/security /Users/tinetti/Projects/pitwall/commands/start.md:26 — `$ARGUMENTS` is interpolated into the `!` bash line inside double quotes, and the comment at line 17 justifies it as safe because &quot;the argument is quoted&quot;. Double quotes do not suppress `$(...)` or backticks, so `/pitwall:start feat/x$(...)` executes inside the already-approved command string, and the `allowed-tools` prefix match cannot gate a substitution nested in a command that already matched → Either correct the rationale to state the real residual risk, or stop interpolating: emit the branch through a mechanism the shell does not re-expand (e.g. pass it via the environment set outside the interpolation, or have the CLI read it from stdin) before the plugin ships in phase 5.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/src/worktree.js:8 — Spec's declared interface is `{path, created, branchCreated, base:string}`; the implementation widens `base` to `string|null` and returns `null` for every no-op/existing-branch path. The reasoning in the typedef is sound (naming a base nobody chose would be an invention), but it is an undeclared change to a spec-stated signature → Note the widening in the spec (or contract addendum) so phase 5's consumers are not written against `base:string`.</li>
+              <li>low/logic /Users/tinetti/Projects/pitwall/src/worktree.js:233 — The unborn-HEAD guard runs after the &quot;branch already checked out&quot; guard, and `git worktree list --porcelain` still prints `branch refs/heads/&lt;name&gt;` for an unborn HEAD. `pw start main` in a fresh `git init` therefore reports &quot;already checked out at …&quot; instead of the specified &quot;no commits yet — make an initial commit first&quot; remedy (spec Failure Modes, unborn HEAD row) → Hoist the `rev-parse --verify HEAD` check above the `elsewhere` lookup so the zero-commit remedy always wins.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/src/cli.js:20 — The shared USAGE block advertises `--json` as a global option, but `start` rejects every flag with exit 2 (`start` at line 103), so `pw start --json` prints a usage message that lists an option the subcommand refuses → Scope the Options line to `next` (e.g. `--json  (next) Print the raw inference result…`) so the usage text is not self-contradicting.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+      <article class="phase">
+        <div class="phase-strip">
+          <div class="ph-cell ph-title">
+            <span class="ph-index">phase 05</span>
+            <h3>Cleanup baton, packaging, and adoption</h3>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">result</span>
+            <span><span class="chip chip-go">PASS</span></span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">review</span>
+            <span class="ph-val">passed</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">commit</span>
+            <span class="ph-val">608f893fe9ea27947806d26fd58366e01e79b32f</span>
+          </div>
+          <div class="ph-cell">
+            <span class="kicker">cycles</span>
+            <span class="ph-val num">2</span>
+          </div>
+        </div>
+        <div class="phase-body">
+          <p class="phase-summary">Phase 5 built: the cleanup baton (providers/pitwall-cleanup.md), pw status and /pitwall:status via a new renderPosition export, plugin packaging (.claude-plugin/plugin.json, executable bin/pw, package.json bin), the four vendored /spec:* routing commands copied byte-identically, README.md, and tests/commands.test.js. Three spec items needed decisions: the superpowers manifest ships at examples/superpowers-execute.md (inside providers/ it makes loadProviders throw &quot;duplicate stage execute&quot; and breaks every command); plugin.json declares no commands key (no precedent among 79 installed plugins, and the key is additive to convention discovery so it would double-register) with the declared set living in tests/commands.test.js instead; and a new optional manifest key &quot;argument&quot; (change-id | branch | none) stops the cleanup baton rendering &quot;/mar CHANGE-ID&quot; — it now renders &quot;/mar feat/thing&quot;. All 249 tests pass. — All eight cycle-1 findings are resolved: the real install check was performed and its result is now load-bearing in both the spec (Adoption key decision at spec-phase-5.md:125-126, plus a four-row deviation table at :196-201) and README.md's Install section, which correctly states the plugin ships `/pitwall:spec:*` and that the bare `/spec:*` names the OpenSpec batons use come from the `~/.claude/commands/spec/` symlinks; the three medium spec-deviations are recorded in the contract; ARGUMENT_SOURCES is now a Map with a DEFAULT_ARGUMENT fallback (src/baton.js:27-31, :118-120); `bin/pw --help` is spawned and asserted (tests/commands.test.js:270-281); the examples/ swap is loaded and rendered in a scratch providers dir; and README.md:109 now names all three warning surfaces. Zero critical and zero high findings remain — the three below are non-blocking. The implementation is ready to commit; the outstanding medium is one sentence of manifest prose the spec asked for and the README currently carries instead.</p>
+          <div class="findings">
+            <div class="findings-head">
+              <span class="kicker">findings</span>
+              <span class="meta">3</span>
+            </div>
+            <ul>
+              <li>medium/spec-deviation /Users/tinetti/Projects/pitwall/providers/openspec-specs.md:8 — Spec *Adoption* key decision (spec-phase-5.md:127) and the Failure Modes row &quot;Vendored spec commands | Broken layer&quot; (spec-phase-5.md:169) both require that &quot;the OpenSpec provider manifest must state which artifact it assumes — the `/spec:*` command, the `opsx:*` skill, or the `openspec` CLI directly&quot;. Neither providers/openspec-specs.md nor providers/openspec-execute.md says so; the only place the `opsx:*` layer is named is README.md:105, and the vendored commands' own `openspec init` guard (commands/spec/propose.md:9) covers the missing-directory case but not the stated mitigation. Non-blocking because the operator-facing message exists, but the mitigation is not where the spec put it → Add one sentence to the body of providers/openspec-specs.md and providers/openspec-execute.md naming the layer each assumes (the `/spec:*` command, which invokes the per-project `opsx:*` skill), or record the relocation to README.md:105 in the spec's deviation table.</li>
+              <li>low/spec-deviation /Users/tinetti/Projects/pitwall/.claude-plugin/plugin.json:9 — The manifest adds a `homepage` key that the spec's literal JSON block (spec-phase-5.md:88-96) does not list. It is benign and consistent with the Rollout prerequisite to create `github.com/tinetti/pitwall`, but the spec presents that block as the file's contents and the deviation table records every other divergence → Add `homepage` to the spec's JSON snippet so the block still reads as the shipped file.</li>
+              <li>low/testing /Users/tinetti/Projects/pitwall/docs/ideation/pitwall/spec-phase-5.md:157 — Manual Testing item &quot;Add the superpowers manifest and confirm `git status --porcelain` shows exactly one file&quot; is still unticked, and it is the named mitigation for the &quot;superpowers manifest / silent goal violation&quot; failure-mode row (spec-phase-5.md:170). The property is now covered indirectly — tests/commands.test.js:200-240 loads and renders the swap, and tests/provider-swap.test.js asserts a rebind needs no source change — but the one-file diff itself was never observed → Run the `cp examples/superpowers-execute.md providers/openspec-execute.md` swap once, confirm `git status --porcelain` reports one file, revert, and tick the box.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+      </div>
+    </section>
+
+    <section class="band" id="verify" aria-labelledby="verify-h">
+      <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="verify-h">Verification</h2>
+          <p class="sec-sub">The contract’s completion predicate, run against the repository after the phases finished. The line below is verbatim.</p>
+        </div>
+      </div>
+      <div class="verify">
+        <div>
+          <p class="verify-line">VERIFY pitwall: commits=5/5 pass=8 fail=0 judgment=1</p>
+          <p class="verify-note">Exit 0 — every command criterion passed and every phase expected to commit did. Criteria marked for judgment still need a human to look.</p>
+        </div>
+        <span class="stamp is-go">verified</span>
+      </div>
+      </div>
+    </section>
+
+    <section class="band" id="close" aria-labelledby="close-h">
+      <div class="wrap">
+        <div class="close">
+          <div>
+            <span class="kicker">what to do next</span>
+            <h2 id="close-h">This run is done.</h2>
+            <p>Every phase completed with a passing review, and verification passed.</p>
+          </div>
+          <div class="close-meta">
+            <span class="stamp is-go">clean</span>
+            <span class="meta">2026-08-24</span>
+          </div>
+        </div>
+        <ul class="links">
+        <li><a href="contract.html">contract.html</a><span class="meta">the plan this run executed</span></li>
+        </ul>
+        <p class="colophon">Generated by <code>ideation:run-report-gen</code> from <code>docs/ideation/pitwall/run-2026-08-24.json</code>. That JSON is the source of truth for this page — edit the record and re-render rather than editing this file, which is overwritten in place.</p>
+      </div>
+    </section>
+    </main>
+    <script>
+(function () {
+  'use strict';
+
+  /* ---- copy ------------------------------------------------------------ */
+  function flash(btn, label) {
+    var prior = btn.dataset.label || btn.textContent;
+    btn.dataset.label = prior;
+    btn.textContent = label;
+    btn.dataset.state = 'done';
+    setTimeout(function () {
+      btn.textContent = prior;
+      btn.removeAttribute('data-state');
+    }, 1800);
+  }
+  document.querySelectorAll('.copy[data-copy]').forEach(function (btn) {
+    btn.setAttribute('aria-live', 'polite');
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.dataset.copy);
+      if (!target) return;
+      var text = target.textContent.trim();
+      /* Reports are opened over file://, where navigator.clipboard is absent
+         entirely — reading it throws before any rejection handler could run,
+         so the guard comes before the call. Select the text first so the
+         "press ⌘C" fallback is a true instruction and not an excuse. */
+      var manual = function () {
+        if (window.getSelection && document.createRange) {
+          var range = document.createRange();
+          range.selectNodeContents(target);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        flash(btn, 'press ' + (navigator.platform.indexOf('Mac') === 0 ? '⌘C' : 'Ctrl+C'));
+      };
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { manual(); return; }
+      navigator.clipboard.writeText(text).then(
+        function () { flash(btn, 'copied'); },
+        manual
+      );
+    });
+  });
+
+  /* ---- theme (auto -> light -> dark) ----------------------------------- */
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    var KEY = 'ideation-run-report-theme';
+    var root = document.documentElement;
+    var LABEL = {
+      auto: 'Colour theme: follow system',
+      light: 'Colour theme: light',
+      dark: 'Colour theme: dark'
+    };
+    var apply = function (mode) {
+      if (mode === 'auto') delete root.dataset.theme;
+      else root.dataset.theme = mode;
+      themeBtn.dataset.mode = mode;
+      themeBtn.setAttribute('aria-label', LABEL[mode]);
+      themeBtn.title = LABEL[mode];
+      try {
+        if (mode === 'auto') localStorage.removeItem(KEY);
+        else localStorage.setItem(KEY, mode);
+      } catch (e) {}
+    };
+    apply(root.dataset.theme || 'auto');
+    themeBtn.addEventListener('click', function () {
+      var order = ['auto', 'light', 'dark'];
+      apply(order[(order.indexOf(root.dataset.theme || 'auto') + 1) % 3]);
+    });
+  }
+})();
+</script>
+  </body>
+</html>
