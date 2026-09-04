@@ -3,7 +3,7 @@ stage: contract
 command: /ideation:ideation
 model: opus
 effort: high
-handoff: clear
+handoff: inline
 doneWhenPathExists: docs/ideation/*/contract.md
 ---
 Turn the interview into the contract: goals, success criteria, phase breakdown, and the decision

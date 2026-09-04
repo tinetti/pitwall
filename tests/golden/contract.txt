@@ -3,7 +3,7 @@ feat/thing · beat 4 of 7 (contract)
   ▶ contract
 
 NEXT:
-  /clear, then run:
+  run:
   /ideation:ideation
   └ opus · high effort
 

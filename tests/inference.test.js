@@ -97,6 +97,13 @@ describe('the shipped provider manifests', () => {
       providers.get('contract').doneWhenPathExists,
     );
   });
+
+  it('enters the contract beat inline, because the refine baton promises one unbroken session', () => {
+    // `handoff` describes how to *enter* a beat. The refine body tells the operator to carry
+    // straight on into the contract, so a `clear` here would discard the interview that the
+    // contract is written from — the two manifests would be giving opposite instructions.
+    assert.equal(providers.get('contract').handoff, 'inline');
+  });
 });
 
 describe('resolveBeat', () => {
