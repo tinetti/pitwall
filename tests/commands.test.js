@@ -8,14 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { BEATS } from '../src/beats.js';
 import { renderBaton } from '../src/baton.js';
 import { parseManifest } from '../src/frontmatter.js';
-import { loadProviders } from '../src/providers.js';
+import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, tempRoot, writeFile } from './helpers/repo-fixture.js';
 
 after(cleanupAll);
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COMMANDS = path.join(ROOT, 'commands');
-const PROVIDERS = path.join(ROOT, 'providers');
+const PROVIDERS = path.join(ROOT, 'bookings');
 
 /**
  * The command set Pitwall claims to ship.
@@ -187,13 +187,13 @@ describe('the plugin manifest', () => {
 });
 
 /**
- * The shipped manifests, copied to a throwaway directory so a swap can be applied to them without
+ * The shipped bookings, copied to a throwaway directory so a swap can be applied to them without
  * touching the developer's checkout.
  *
- * @returns {string} the copied `providers/` directory
+ * @returns {string} the copied `bookings/` directory
  */
 function scratchProviders() {
-  const dir = path.join(tempRoot(), 'providers');
+  const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
   for (const entry of fs.readdirSync(PROVIDERS).filter((name) => name.endsWith('.md'))) {
     fs.copyFileSync(path.join(PROVIDERS, entry), path.join(dir, entry));
@@ -202,8 +202,8 @@ function scratchProviders() {
 }
 
 describe('the worked alternative binding in examples/', () => {
-  // Nothing under `examples/` is on any load path — `loadProviders` only ever reads `providers/` —
-  // so a typo in `stage`, `argument`, or the detector would surface for the first time on the
+  // Nothing under `examples/` is on any load path — `loadBookings` only ever reads `bookings/` —
+  // so a typo in `leg`, `argument`, or the stamp would surface for the first time on the
   // operator who followed the README and overwrote their working manifest with it.
   it('loads as a drop-in replacement for the execute manifest', () => {
     const dir = scratchProviders();
@@ -212,7 +212,7 @@ describe('the worked alternative binding in examples/', () => {
       path.join(dir, 'openspec-execute.md'),
     );
 
-    const providers = loadProviders(dir, { knownStages: BEATS.map((beat) => beat.id) });
+    const providers = loadBookings(dir, { knownStages: BEATS.map((beat) => beat.id) });
     const provider = providers.get('execute');
     assert.ok(provider, 'the swapped manifest does not bind the execute stage');
     assert.equal(provider.command, 'superpowers:subagent-driven-development');
@@ -225,7 +225,7 @@ describe('the worked alternative binding in examples/', () => {
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
-    const provider = loadProviders(dir, { knownStages: BEATS.map((beat) => beat.id) }).get('execute');
+    const provider = loadBookings(dir, { knownStages: BEATS.map((beat) => beat.id) }).get('execute');
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.

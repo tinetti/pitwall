@@ -1,10 +1,10 @@
 ---
-stage: worktree
+leg: worktree
 command: /pitwall:start
 model: haiku
 effort: low
-handoff: inline
-doneWhenCmd: false
+handover: through
+stampCmd: false
 ---
 Cut the feature branch and its isolated worktree, then move into it — every beat after this one
 happens in the new tree. Pass the branch name as the argument (`feat/<short-name>`) and read the

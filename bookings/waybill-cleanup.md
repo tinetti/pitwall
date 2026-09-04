@@ -1,11 +1,11 @@
 ---
-stage: cleanup
+leg: cleanup
 command: /mar
 model: sonnet
 effort: low
-handoff: inline
+handover: through
 argument: branch
-doneWhenCmd: false
+stampCmd: false
 ---
 Fold the branch back into the default branch and take its worktree with it. Read the whole change
 one last time first: the three-dot diff between the default branch and this one is exactly what is

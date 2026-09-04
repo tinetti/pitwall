@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { BEATS } from '../src/beats.js';
 import { resolveBeat } from '../src/inference.js';
 import { executeProgress } from '../src/progress.js';
-import { loadProviders } from '../src/providers.js';
+import { loadBookings } from '../src/bookings.js';
 import {
   addSubmodule,
   cleanupAll,
@@ -37,19 +37,19 @@ const absent = () => pathWithout('openspec');
 
 /**
  * @param {string} dir
- * @param {Map<string, import('../src/providers.js').Provider>} [providers]
+ * @param {Map<string, import('../src/bookings.js').Booking>} [providers]
  */
 const resolve = (dir, providers) => withPath(absent(), () => resolveBeat(dir, providers));
 
 /**
  * @param {Record<string,string>} files basename → contents
- * @returns {Map<string, import('../src/providers.js').Provider>}
+ * @returns {Map<string, import('../src/bookings.js').Booking>}
  */
 function providerMap(files) {
-  const dir = path.join(tempRoot(), 'providers');
+  const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
   for (const [name, contents] of Object.entries(files)) writeFile(path.join(dir, name), contents);
-  return loadProviders(dir, { knownStages: KNOWN_STAGES });
+  return loadBookings(dir, { knownStages: KNOWN_STAGES });
 }
 
 describe('BEATS', () => {
@@ -70,9 +70,9 @@ describe('BEATS', () => {
   });
 });
 
-describe('the shipped provider manifests', () => {
-  const providers = loadProviders(
-    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'providers'),
+describe('the shipped bookings', () => {
+  const providers = loadBookings(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings'),
     { knownStages: KNOWN_STAGES },
   );
 
@@ -83,26 +83,26 @@ describe('the shipped provider manifests', () => {
     assert.deepEqual([...providers.keys()].sort(), [...KNOWN_STAGES].sort());
   });
 
-  it('names a model and an effort on every manifest, so no stage can leave one unsourced', () => {
+  it('names a model and an effort on every booking, so no leg can leave one unsourced', () => {
     for (const provider of providers.values()) {
       assert.ok(provider.model, `${provider.path} has no model`);
       assert.ok(provider.effort, `${provider.path} has no effort`);
     }
   });
 
-  it('keeps refine and contract on one command, separated only by detector', () => {
+  it('keeps refine and contract on one command, separated only by stamp', () => {
     assert.equal(providers.get('refine').command, providers.get('contract').command);
     assert.notEqual(
-      providers.get('refine').doneWhenPathExists,
-      providers.get('contract').doneWhenPathExists,
+      providers.get('refine').stampPath,
+      providers.get('contract').stampPath,
     );
   });
 
-  it('enters the contract beat inline, because the refine baton promises one unbroken session', () => {
-    // `handoff` describes how to *enter* a beat. The refine body tells the operator to carry
-    // straight on into the contract, so a `clear` here would discard the interview that the
-    // contract is written from — the two manifests would be giving opposite instructions.
-    assert.equal(providers.get('contract').handoff, 'inline');
+  it('enters the contract beat through, because the refine baton promises one unbroken session', () => {
+    // `handover` describes how to *enter* a beat. The refine body tells the operator to carry
+    // straight on into the contract, so a `transfer` here would discard the interview that the
+    // contract is written from — the two bookings would be giving opposite instructions.
+    assert.equal(providers.get('contract').handover, 'through');
   });
 });
 
@@ -140,13 +140,13 @@ describe('resolveBeat', () => {
   it('carries the manifest for a wrapper-owned beat too, since the baton is not the detector', () => {
     const result = resolve(worktreeFixture().dir);
     assert.equal(result.provider.command, '/pitwall:start');
-    assert.match(result.provider.path, /pitwall-worktree\.md$/);
+    assert.match(result.provider.path, /waybill-bay\.md$/);
   });
 
   it('carries the manifest for the terminal beat too, so the loop closes on a baton', () => {
     const result = resolve(cleanupFixture().dir);
     assert.equal(result.beat, 'cleanup');
-    assert.match(result.provider.path, /pitwall-cleanup\.md$/);
+    assert.match(result.provider.path, /waybill-cleanup\.md$/);
   });
 
   it('leaves provider undefined for a beat no manifest is bound to', () => {
@@ -257,14 +257,14 @@ describe('resolveBeat', () => {
     assert.deepEqual(resolve(contractFixture().dir).skipped, []);
   });
 
-  it('degrades a detector that cannot run to a warning rather than a throw', () => {
+  it('degrades a stamp that cannot run to a warning rather than a throw', () => {
     const providers = providerMap({
       'broken-specs.md': [
         '---',
-        'stage: specs',
+        'leg: specs',
         'command: /spec:propose',
         'model: placeholder',
-        'doneWhenCmd: pitwall-no-such-binary-xyz',
+        'stampCmd: pitwall-no-such-binary-xyz',
         '---',
         '',
       ].join('\n'),

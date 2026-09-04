@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 
 import { BEATS } from './beats.js';
 import { renderBaton, renderPosition } from './baton.js';
-import { BUILTIN_PROVIDERS, resolveBeat } from './inference.js';
+import { BUILTIN_BOOKINGS, resolveBeat } from './inference.js';
 import { artifactPaths, checkIgnored } from './preflight.js';
-import { loadProviders } from './providers.js';
+import { loadBookings } from './bookings.js';
 import { superprojectRoot, worktreeRoot } from './repo.js';
 import { WorktreeError, isInside, startWorktree } from './worktree.js';
 
@@ -74,7 +74,7 @@ function next(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadProviders(BUILTIN_PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
   const state = resolveBeat(cwd, providers);
 
   if (args.includes('--json')) {
@@ -108,7 +108,7 @@ function status(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadProviders(BUILTIN_PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
   const state = resolveBeat(cwd, providers);
 
   io.out(renderPosition(state, checkIgnored(root, artifactPaths(providers))));
@@ -156,7 +156,7 @@ function start(cwd, args, io) {
     return 2;
   }
 
-  const providers = loadProviders(BUILTIN_PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
   const state = resolveBeat(result.path, providers);
 
   // The one place Pitwall names a shell command rather than a slash command: a tool-invoked shell

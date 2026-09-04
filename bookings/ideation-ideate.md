@@ -1,10 +1,10 @@
 ---
-stage: ideate
+leg: ideate
 command: /ideation:brainstorm
 model: opus
 effort: high
-handoff: clear
-doneWhenCmd: false
+handover: transfer
+stampCmd: false
 ---
 Talk the idea through before committing to it. Name the problem, argue for the smallest version
 that could work, and surface the assumptions you have not tested yet. Nothing is written to disk

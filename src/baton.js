@@ -4,14 +4,13 @@ import { BEATS } from './beats.js';
  * What the `handoff` key means for the operator. An unrecognised value is rendered verbatim rather
  * than dropped, so a provider can ask for something Pitwall never anticipated and still be obeyed.
  */
-const HANDOFF_LINES = {
-  clear: '/clear, then run:',
-  session: 'in a new session, run:',
-  inline: 'run:',
+const HANDOVER_LINES = {
+  transfer: '/clear, then run:',
+  through: 'run:',
 };
 
 /** Used when a manifest declares no `handoff` at all — the command still needs introducing. */
-const DEFAULT_HANDOFF = 'run:';
+const DEFAULT_HANDOVER = 'run:';
 
 /**
  * The repository fact a manifest's `argument` names. Every value returns `null` when the repository
@@ -126,7 +125,7 @@ function nextBlock(state) {
 
   return [
     'NEXT:',
-    `${INDENT}${HANDOFF_LINES[provider.handoff] ?? provider.handoff ?? DEFAULT_HANDOFF}`,
+    `${INDENT}${HANDOVER_LINES[provider.handover] ?? provider.handover ?? DEFAULT_HANDOVER}`,
     `${INDENT}${command}`,
     `${INDENT}└ ${detail}`,
     ...batonText(provider.body),

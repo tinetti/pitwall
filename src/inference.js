@@ -2,28 +2,28 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { BEATS, cleanupIsDone, ideateIsDone, worktreeIsDone } from './beats.js';
-import { evaluateProvider, loadProviders } from './providers.js';
+import { evaluateBooking, loadBookings } from './bookings.js';
 import { currentBranch, defaultBranch, superprojectRoot, worktreeRoot } from './repo.js';
 import { discoverChangeId, executeProgress } from './progress.js';
 
 /**
- * The manifests Pitwall ships with, used when a caller supplies none. Exported so the CLI can load
+ * The bookings Pitwall ships with, used when a caller supplies none. Exported so the CLI can load
  * the same map it hands to {@link resolveBeat} and derive the preflight's artifact paths from it,
  * rather than keeping a second copy of this path.
  */
-export const BUILTIN_PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'providers');
+export const BUILTIN_BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
 
 /**
  * @typedef {{beat:string|null, index:number, completed:string[], skipped:string[],
  *            progress?:{done:number,total:number,source:string,changeId:string|null},
- *            provider?:import('./providers.js').Provider, branch:string|null,
+ *            provider?:import('./bookings.js').Booking, branch:string|null,
  *            changeId:string|null, warnings:string[]}} Inference
  */
 
 /**
  * @param {import('./beats.js').Beat} beat
  * @param {import('./beats.js').RepoState} state
- * @param {Map<string, import('./providers.js').Provider>} providers
+ * @param {Map<string, import('./bookings.js').Booking>} providers
  * @param {string[]} warnings collected in place
  * @returns {boolean}
  */
@@ -34,7 +34,7 @@ function beatIsDone(beat, state, providers, warnings) {
   const provider = providers.get(beat.id);
   if (!provider) return false;
 
-  const result = evaluateProvider(provider, state.root);
+  const result = evaluateBooking(provider, state.root);
   warnings.push(...result.warnings);
   return result.done;
 }
@@ -53,13 +53,13 @@ function beatIsDone(beat, state, providers, warnings) {
  * and throws with the offending file and key.
  *
  * @param {string} cwd
- * @param {Map<string, import('./providers.js').Provider>} [providers] defaults to the built-ins
+ * @param {Map<string, import('./bookings.js').Booking>} [providers] defaults to the built-ins
  * @returns {Inference}
  */
 export function resolveBeat(cwd, providers) {
   /** @type {string[]} */
   const warnings = [];
-  const manifests = providers ?? loadProviders(BUILTIN_PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const manifests = providers ?? loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
 
   // Inside a submodule every git query answers for the submodule's own tree, so the beats would be
   // resolved against a repository the operator's change does not live in. Anchor on the

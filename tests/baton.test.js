@@ -59,13 +59,13 @@ function state(overrides = {}) {
     completed: ['ideate', 'worktree', 'refine', 'contract'],
     skipped: [],
     provider: {
-      stage: 'specs',
+      leg: 'specs',
       command: '/spec:propose',
       model: 'placeholder-model',
       effort: 'high',
-      handoff: 'clear',
+      handover: 'transfer',
       body: '',
-      path: '/providers/openspec-specs.md',
+      path: '/bookings/openspec-specs.md',
     },
     branch: 'feat/session-handoff',
     changeId: 'add-session-handoff',
@@ -184,7 +184,7 @@ describe('renderBaton progress', () => {
 
 describe('renderBaton NEXT block', () => {
   /**
-   * @param {Partial<import('../src/providers.js').Provider>} provider
+   * @param {Partial<import('../src/bookings.js').Booking>} provider
    * @param {Partial<import('../src/inference.js').Inference>} [rest]
    */
   const next = (provider, rest = {}) =>
@@ -224,22 +224,21 @@ describe('renderBaton NEXT block', () => {
     assert.equal(output.includes('effort'), false);
   });
 
-  for (const [handoff, line] of [
-    ['clear', '/clear, then run:'],
-    ['session', 'in a new session, run:'],
-    ['inline', 'run:'],
+  for (const [handover, line] of [
+    ['transfer', '/clear, then run:'],
+    ['through', 'run:'],
   ]) {
-    it(`renders the ${handoff} handoff as "${line}"`, () => {
-      assert.equal(next({ handoff }).split('\n').includes(`  ${line}`), true);
+    it(`renders the ${handover} handover as "${line}"`, () => {
+      assert.equal(next({ handover }).split('\n').includes(`  ${line}`), true);
     });
   }
 
-  it('renders an unrecognised handoff verbatim rather than dropping the line', () => {
-    assert.match(next({ handoff: 'hand the laptop to Dave' }), /^ {2}hand the laptop to Dave$/m);
+  it('renders an unrecognised handover verbatim rather than dropping the line', () => {
+    assert.match(next({ handover: 'hand the laptop to Dave' }), /^ {2}hand the laptop to Dave$/m);
   });
 
-  it('falls back to a bare instruction when the manifest declares no handoff', () => {
-    assert.match(next({ handoff: undefined }), /^ {2}run:\n {2}\/spec:propose/m);
+  it('falls back to a bare instruction when the manifest declares no handover', () => {
+    assert.match(next({ handover: undefined }), /^ {2}run:\n {2}\/spec:propose/m);
   });
 
   it('carries the manifest body through as the baton prose', () => {
@@ -345,6 +344,6 @@ describe('criterion 2: no model name is hardcoded anywhere in src/', () => {
     const offenders = filesUnder(SRC).filter((file) =>
       /(opus|sonnet|haiku)/i.test(fs.readFileSync(file, 'utf8')),
     );
-    assert.deepEqual(offenders, [], 'model names must live in providers/, never in src/');
+    assert.deepEqual(offenders, [], 'model names must live in bookings/, never in src/');
   });
 });

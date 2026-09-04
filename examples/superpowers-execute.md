@@ -1,11 +1,11 @@
 ---
-stage: execute
+leg: execute
 command: superpowers:subagent-driven-development
 model: opus
 effort: high
-handoff: clear
+handover: transfer
 argument: none
-doneWhenCmd: ls openspec/changes/*/tasks.md >/dev/null 2>&1 && ! grep -qE '^[[:space:]]*[-*+] \[ \]' openspec/changes/*/tasks.md
+stampCmd: ls openspec/changes/*/tasks.md >/dev/null 2>&1 && ! grep -qE '^[[:space:]]*[-*+] \[ \]' openspec/changes/*/tasks.md
 ---
 Hand the tasks list to subagent-driven development: one subagent per task, each briefed on that task
 alone and returning a diff and a verdict rather than a transcript. Name the change folder in the

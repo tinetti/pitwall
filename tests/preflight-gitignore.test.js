@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 import { BEATS } from '../src/beats.js';
 import { artifactPaths, checkIgnored } from '../src/preflight.js';
-import { loadProviders } from '../src/providers.js';
+import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, createRepo, tempRoot, writeFile } from './helpers/repo-fixture.js';
 
 after(cleanupAll);
 
-const PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'providers');
+const PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
 
 /**
  * The product spawns git with the developer's real environment, so a global `core.excludesFile` on
@@ -92,7 +92,7 @@ describe('checkIgnored', () => {
     const dir = repoIgnoring('/plans/changes/\n');
     assert.deepEqual(check(dir, ['plans/changes']).ignored, [], 'git needs the slash');
 
-    const providers = new Map([['specs', { stage: 'specs', doneWhenPathExists: 'plans/changes' }]]);
+    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
     const queries = artifactPaths(providers);
     assert.ok(queries.includes('plans/changes/'), `no directory query in ${queries.join(', ')}`);
     assert.deepEqual(check(dir, queries).ignored, ['plans/changes/']);
@@ -124,7 +124,7 @@ describe('checkIgnored', () => {
 });
 
 describe('artifactPaths', () => {
-  const shipped = () => loadProviders(PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const shipped = () => loadBookings(PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
 
   it('de-globs the shipped manifests down to the two wrapper-owned directories', () => {
     assert.deepEqual(artifactPaths(shipped()), ['docs/ideation/', 'openspec/']);
@@ -138,29 +138,29 @@ describe('artifactPaths', () => {
 
   it('collapses a nested prefix into its ancestor rather than naming one rule twice', () => {
     const providers = new Map([
-      ['specs', { stage: 'specs', doneWhenPathExists: 'openspec/changes/*/tasks.md' }],
-      ['execute', { stage: 'execute', doneWhenPathExists: 'openspec/changes/*/design.md' }],
+      ['specs', { leg: 'specs', stampPath: 'openspec/changes/*/tasks.md' }],
+      ['execute', { leg: 'execute', stampPath: 'openspec/changes/*/design.md' }],
     ]);
     assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/']);
   });
 
   it('keeps a directory the wrapper does not already cover', () => {
-    const providers = new Map([['specs', { stage: 'specs', doneWhenPathExists: 'plans/*/tasks.md' }]]);
+    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/*/tasks.md' }]]);
     assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/', 'plans/']);
   });
 
   it('ignores a manifest that detects by command only', () => {
-    const providers = new Map([['ideate', { stage: 'ideate', doneWhenCmd: 'false' }]]);
+    const providers = new Map([['ideate', { leg: 'ideate', stampCmd: 'false' }]]);
     assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/']);
   });
 
   it('queries a glob-free file pattern without inventing a trailing slash', () => {
-    const providers = new Map([['specs', { stage: 'specs', doneWhenPathExists: 'notes/PLAN.md' }]]);
+    const providers = new Map([['specs', { leg: 'specs', stampPath: 'notes/PLAN.md' }]]);
     assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'notes/PLAN.md', 'openspec/']);
   });
 
   it('marks a glob-free directory pattern as a directory, since git will not guess', () => {
-    const providers = new Map([['specs', { stage: 'specs', doneWhenPathExists: 'plans/changes' }]]);
+    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
     assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/', 'plans/changes/']);
   });
 });

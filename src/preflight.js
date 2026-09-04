@@ -20,7 +20,7 @@ const WRAPPER_PATHS = ['docs/ideation/', 'openspec/'];
 const LOOKS_LIKE_FILE = /[^/.]\.[^/.]+$/;
 
 /**
- * The literal directory prefix of a `doneWhenPathExists` glob, or the pattern itself when it holds
+ * The literal directory prefix of a `stampPath` glob, or the pattern itself when it holds
  * no glob at all. Asking git about `docs/ideation/*` is meaningless: check-ignore does not expand
  * the pattern, it matches the literal string and echoes it back, so a hit would name a path that
  * does not exist.
@@ -67,14 +67,14 @@ function collapse(paths) {
  * Every location the workflow will write, derived from the manifests rather than from a list in
  * code — a swapped provider brings its own artifact directory with it.
  *
- * @param {Map<string, Pick<import('./providers.js').Provider,'doneWhenPathExists'>>} providers
+ * @param {Map<string, Pick<import('./bookings.js').Booking,'stampPath'>>} providers
  * @returns {string[]} repo-relative queries, ready for {@link checkIgnored}
  */
 export function artifactPaths(providers) {
   const paths = [...WRAPPER_PATHS];
   for (const provider of providers.values()) {
-    if (!provider.doneWhenPathExists) continue;
-    const query = deglob(provider.doneWhenPathExists);
+    if (!provider.stampPath) continue;
+    const query = deglob(provider.stampPath);
     if (query !== null) paths.push(query);
   }
   return collapse(paths);
