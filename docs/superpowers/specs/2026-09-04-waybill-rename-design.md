@@ -67,7 +67,7 @@ Two consequences worth keeping in mind while rewriting prose:
 | 6 | the file binding a leg to a tool | provider / manifest | **booking** |
 | 7 | where the docket is | position / inference | **last stamp** |
 | 8 | completion evidence | detector | **stamp** |
-| 9 | session boundary mode | `handoff:` | `carriage:` |
+| 9 | session boundary mode | `handoff:` | `handover:` |
 | 10 | the workspace | worktree | **bay** |
 | 11 | the external tool for a leg | provider | **carrier** |
 | 12 | the files on disk | artifacts | **papers** |
@@ -126,12 +126,18 @@ unknown values pass through verbatim (`src/baton.js:118`, `HANDOFF_LINES[v] ?? v
 | `session` | `in a new session, run:` | **removed** |
 | absent | `run:` (default) | absent → `through` |
 
-**The key is `carriage:`, not `transfer:`.** The obvious rename produced `transfer: transfer` — a
-value restating its own key, which reads as a mistake in every booking that sets it. `carriage:` fixes
-it and earns the values: *through carriage* is the actual freight term for one carrier running
-consecutive legs without a break, which is exactly what `inline` meant. If `carriage:` reads too close
-to "carriage return" in practice, `handover:` is the fallback; the values do the metaphor work either
-way.
+**The key is `handover:`, not `transfer:`.** The obvious rename produced `transfer: transfer` — a
+value restating its own key, which reads as a mistake in every booking that sets it. `handover:` is a
+plain-English key carrying two metaphor-bearing values, which is the right division of labour:
+*through carriage* is the actual freight term for one carrier running consecutive legs without a
+break, and that is exactly what `inline` meant.
+
+`carriage:` was considered and rejected — in a text tool, a key named `carriage` invites a
+carriage-return misreading for no gain, since the values do all the metaphor work regardless.
+
+Note the near-collision with the old `handoff`: the key barely moves, only its values do. Do not
+global-replace `handoff` → `handover`, which would also rewrite unrelated prose. `HANDOFF_LINES` and
+`DEFAULT_HANDOFF` are the only two symbols that change.
 
 `session` had **zero users** — no file in `providers/`, `examples/`, or any test set it. It is
 dead-but-documented surface, and freight has no natural word for "a second handler starts in parallel
@@ -152,7 +158,7 @@ stage: execute                         leg: execute
 command: /spec:apply                   command: /spec:apply
 model: opus                            model: opus
 effort: high                           effort: high
-handoff: clear                         carriage: through
+handoff: clear                         handover: through
 argument: change-id                    argument: change-id
 doneWhenPathExists: …/tasks.md         stampPath: openspec/changes/*/tasks.md
 doneWhenCmd: test -f Makefile          stampCmd: test -f Makefile
@@ -161,7 +167,7 @@ doneWhenCmd: test -f Makefile          stampCmd: test -f Makefile
 
 - `REQUIRED`: `['stage','command','model']` → `['leg','command','model']`
 - `OPTIONAL`: `['effort','handoff','argument','doneWhenPathExists','doneWhenCmd']` →
-  `['effort','carriage','argument','stampPath','stampCmd']`
+  `['effort','handover','argument','stampPath','stampCmd']`
 - `ARGUMENT_SOURCES = ['change-id','branch','none']` — **unchanged**, carries no metaphor.
 - Error strings at `src/providers.js:57,60,64,67,74` embed the words "stage", "manifest", and
   "detector" — rewrite to "leg", "booking", "stamp".
@@ -236,8 +242,8 @@ more accurate: it checks the docket's papers before it moves.
 | Was | Now |
 | --- | --- |
 | `worktreePath` (`beats.js:41`) | `bayPath` |
-| `HANDOFF_LINES` (`baton.js:7`) | `CARRIAGE_LINES` |
-| `DEFAULT_HANDOFF` (`baton.js:14`) | `DEFAULT_CARRIAGE` |
+| `HANDOFF_LINES` (`baton.js:7`) | `HANDOVER_LINES` |
+| `DEFAULT_HANDOFF` (`baton.js:14`) | `DEFAULT_HANDOVER` |
 | `batonText` (`baton.js:90`) | `waybillText` |
 | `beatIsDone` (`inference.js:30`) | `legIsDone` |
 | `DETECTOR_TIMEOUT_MS` (`providers.js:26`) | `STAMP_TIMEOUT_MS` |
@@ -310,7 +316,7 @@ solely to create the domain bay. Decision: **rename the module to `src/bay.js` a
 
 Edits: `name` → `waybill`; `homepage` → `https://github.com/tinetti/waybill`; `description` rewritten
 ("beat" → "leg", and "pluggable tool holes" is anatomy-metaphor debris — say carriers). `keywords`
-contains no `pitwall` string but should swap `worktree` → `bay` and drop `handoff` for `carriage`.
+contains no `pitwall` string but should swap `worktree` → `bay` and drop `handoff` for `handover`.
 
 No `commands`, `agents`, `skills`, or `bin` keys are declared — those are discovered from directory
 layout, so the manifest is a smaller job than expected. **Changing `name` renames every slash
