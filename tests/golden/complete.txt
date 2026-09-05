@@ -1,5 +1,5 @@
-feat/thing · all 7 beats complete
-  ✓ ideate  ✓ worktree  ✓ refine  ✓ contract  ✓ specs  ✓ execute  ✓ cleanup
+feat/thing · all 7 legs complete
+  ✓ ideate  ✓ bay  ✓ refine  ✓ contract  ✓ specs  ✓ execute  ✓ cleanup
 
 NEXT:
-  nothing to hand off — every beat is complete
+  nothing to hand off — every leg is complete

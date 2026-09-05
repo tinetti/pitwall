@@ -1,19 +1,19 @@
 import { createRepo } from '../helpers/repo-fixture.js';
 
 /**
- * @typedef {{ dir:string, repo:string, branch:string }} BeatFixture
- *   `dir` is where inference should be run; `repo` is always the main worktree.
+ * @typedef {{ dir:string, repo:string, branch:string }} LegFixture
+ *   `dir` is where inference should be run; `repo` is always the main checkout.
  */
 
 /**
- * A repository frozen at the `ideate` beat: the default branch is checked out, nothing has been
- * written, and no later beat is complete.
+ * A repository frozen at the `ideate` leg: the default branch is checked out, nothing has been
+ * written, and no later leg is complete.
  *
  * `remote` and `originHead` are set so `defaultBranch` comes from `origin/HEAD` rather than falling
  * back to the current branch — otherwise the "a branch other than the default" half of the ideate
  * rule could never be false for the right reason.
  *
- * @returns {BeatFixture}
+ * @returns {LegFixture}
  */
 export function ideateFixture() {
   const repo = createRepo({ remote: true, originHead: true });

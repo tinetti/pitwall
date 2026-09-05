@@ -11,7 +11,7 @@ import { cleanupAll, createRepo, tempRoot, writeFile } from './helpers/repo-fixt
 
 after(cleanupAll);
 
-const PROVIDERS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
+const BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
 
 /**
  * The product spawns git with the developer's real environment, so a global `core.excludesFile` on
@@ -85,15 +85,15 @@ describe('checkIgnored', () => {
     assert.deepEqual(check(dir, ['openspec/']).ignored, ['openspec/']);
   });
 
-  it('matches a glob-free directory manifest, because paperPaths gives it the slash it needs', () => {
+  it('matches a glob-free directory booking, because paperPaths gives it the slash it needs', () => {
     // A directory-only rule naming the artifact directory itself matches a path that does not exist
-    // yet only when the query says it is a directory, so a manifest that happens to carry no glob
+    // yet only when the query says it is a directory, so a booking that happens to carry no glob
     // would otherwise slip past the very check this exists for.
     const dir = repoIgnoring('/plans/changes/\n');
     assert.deepEqual(check(dir, ['plans/changes']).ignored, [], 'git needs the slash');
 
-    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
-    const queries = paperPaths(providers);
+    const bookings = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
+    const queries = paperPaths(bookings);
     assert.ok(queries.includes('plans/changes/'), `no directory query in ${queries.join(', ')}`);
     assert.deepEqual(check(dir, queries).ignored, ['plans/changes/']);
   });
@@ -124,9 +124,9 @@ describe('checkIgnored', () => {
 });
 
 describe('paperPaths', () => {
-  const shipped = () => loadBookings(PROVIDERS, { knownStages: LEGS.map((leg) => leg.id) });
+  const shipped = () => loadBookings(BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
 
-  it('de-globs the shipped manifests down to the two wrapper-owned directories', () => {
+  it('de-globs the shipped bookings down to the two wrapper-owned directories', () => {
     assert.deepEqual(paperPaths(shipped()), ['docs/ideation/', 'openspec/']);
   });
 
@@ -137,30 +137,30 @@ describe('paperPaths', () => {
   });
 
   it('collapses a nested prefix into its ancestor rather than naming one rule twice', () => {
-    const providers = new Map([
+    const bookings = new Map([
       ['specs', { leg: 'specs', stampPath: 'openspec/changes/*/tasks.md' }],
       ['execute', { leg: 'execute', stampPath: 'openspec/changes/*/design.md' }],
     ]);
-    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/']);
+    assert.deepEqual(paperPaths(bookings), ['docs/ideation/', 'openspec/']);
   });
 
   it('keeps a directory the wrapper does not already cover', () => {
-    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/*/tasks.md' }]]);
-    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/', 'plans/']);
+    const bookings = new Map([['specs', { leg: 'specs', stampPath: 'plans/*/tasks.md' }]]);
+    assert.deepEqual(paperPaths(bookings), ['docs/ideation/', 'openspec/', 'plans/']);
   });
 
-  it('ignores a manifest that detects by command only', () => {
-    const providers = new Map([['ideate', { leg: 'ideate', stampCmd: 'false' }]]);
-    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/']);
+  it('ignores a booking that stamps by command only', () => {
+    const bookings = new Map([['ideate', { leg: 'ideate', stampCmd: 'false' }]]);
+    assert.deepEqual(paperPaths(bookings), ['docs/ideation/', 'openspec/']);
   });
 
   it('queries a glob-free file pattern without inventing a trailing slash', () => {
-    const providers = new Map([['specs', { leg: 'specs', stampPath: 'notes/PLAN.md' }]]);
-    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'notes/PLAN.md', 'openspec/']);
+    const bookings = new Map([['specs', { leg: 'specs', stampPath: 'notes/PLAN.md' }]]);
+    assert.deepEqual(paperPaths(bookings), ['docs/ideation/', 'notes/PLAN.md', 'openspec/']);
   });
 
   it('marks a glob-free directory pattern as a directory, since git will not guess', () => {
-    const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
-    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/', 'plans/changes/']);
+    const bookings = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
+    assert.deepEqual(paperPaths(bookings), ['docs/ideation/', 'openspec/', 'plans/changes/']);
   });
 });

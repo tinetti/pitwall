@@ -84,7 +84,7 @@ export function createRepo(options = {}) {
 /**
  * Add a linked worktree as a sibling of `repoDir`, named the way `gwt` names it.
  *
- * @param {string} repoDir main worktree
+ * @param {string} repoDir main checkout
  * @param {string} branch new branch to check out there
  * @returns {string} absolute path to the linked worktree
  */

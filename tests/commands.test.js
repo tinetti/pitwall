@@ -15,10 +15,10 @@ after(cleanupAll);
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COMMANDS = path.join(ROOT, 'commands');
-const PROVIDERS = path.join(ROOT, 'bookings');
+const BOOKINGS = path.join(ROOT, 'bookings');
 
 /**
- * The command set Pitwall claims to ship.
+ * The command set Waybill claims to ship.
  *
  * It lives here rather than in a `commands` key in `.claude-plugin/plugin.json` deliberately, and
  * the reason was measured against a scratch install rather than assumed: with no key, `commands/`
@@ -192,11 +192,11 @@ describe('the plugin manifest', () => {
  *
  * @returns {string} the copied `bookings/` directory
  */
-function scratchProviders() {
+function scratchBookings() {
   const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
-  for (const entry of fs.readdirSync(PROVIDERS).filter((name) => name.endsWith('.md'))) {
-    fs.copyFileSync(path.join(PROVIDERS, entry), path.join(dir, entry));
+  for (const entry of fs.readdirSync(BOOKINGS).filter((name) => name.endsWith('.md'))) {
+    fs.copyFileSync(path.join(BOOKINGS, entry), path.join(dir, entry));
   }
   return dir;
 }
@@ -204,44 +204,44 @@ function scratchProviders() {
 describe('the worked alternative binding in examples/', () => {
   // Nothing under `examples/` is on any load path — `loadBookings` only ever reads `bookings/` —
   // so a typo in `leg`, `argument`, or the stamp would surface for the first time on the
-  // operator who followed the README and overwrote their working manifest with it.
-  it('loads as a drop-in replacement for the execute manifest', () => {
-    const dir = scratchProviders();
+  // operator who followed the README and overwrote their working booking with it.
+  it('loads as a drop-in replacement for the execute booking', () => {
+    const dir = scratchBookings();
     fs.copyFileSync(
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
 
-    const providers = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) });
-    const provider = providers.get('execute');
-    assert.ok(provider, 'the swapped manifest does not bind the execute stage');
-    assert.equal(provider.command, 'superpowers:subagent-driven-development');
-    assert.equal(providers.size, fs.readdirSync(dir).length, 'the swap left a stage unbound');
+    const bookings = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) });
+    const booking = bookings.get('execute');
+    assert.ok(booking, 'the swapped booking does not bind the execute stage');
+    assert.equal(booking.command, 'superpowers:subagent-driven-development');
+    assert.equal(bookings.size, fs.readdirSync(dir).length, 'the swap left a stage unbound');
   });
 
-  it('renders a baton naming the skill with no argument appended', () => {
-    const dir = scratchProviders();
+  it('renders a waybill naming the skill with no argument appended', () => {
+    const dir = scratchBookings();
     fs.copyFileSync(
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
-    const provider = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) }).get('execute');
+    const booking = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) }).get('execute');
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.
-    const baton = renderWaybill({
+    const waybill = renderWaybill({
       leg: 'execute',
       index: 6,
       completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
       skipped: [],
-      booking: provider,
+      booking,
       branch: 'feat/thing',
       changeId: 'add-thing',
       warnings: [],
     });
 
-    assert.match(baton, /^ {2}superpowers:subagent-driven-development$/m);
-    assert.equal(baton.includes('subagent-driven-development add-thing'), false);
+    assert.match(waybill, /^ {2}superpowers:subagent-driven-development$/m);
+    assert.equal(waybill.includes('subagent-driven-development add-thing'), false);
   });
 });
 

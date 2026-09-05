@@ -6,14 +6,14 @@ import { parseFrontmatter } from '../src/frontmatter.js';
 describe('parseFrontmatter — accepted syntax', () => {
   it('parses flat key: value scalars and returns the body verbatim', () => {
     const { meta, body } = parseFrontmatter(
-      ['---', 'stage: contract', 'command: /ideation:ideation', 'model: opus', '---', 'Baton text.', ''].join('\n'),
+      ['---', 'stage: contract', 'command: /ideation:ideation', 'model: opus', '---', 'Waybill text.', ''].join('\n'),
     );
     assert.deepEqual(meta, {
       stage: 'contract',
       command: '/ideation:ideation',
       model: 'opus',
     });
-    assert.equal(body, 'Baton text.\n');
+    assert.equal(body, 'Waybill text.\n');
   });
 
   it('splits on the first colon only, so command values keep their own colons', () => {
@@ -22,8 +22,8 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('accepts an unquoted glob containing *', () => {
-    const { meta } = parseFrontmatter('---\ndoneWhenPathExists: docs/ideation/*/contract-data.json\n---\n');
-    assert.equal(meta.doneWhenPathExists, 'docs/ideation/*/contract-data.json');
+    const { meta } = parseFrontmatter('---\nstampPath: docs/ideation/*/contract-data.json\n---\n');
+    assert.equal(meta.stampPath, 'docs/ideation/*/contract-data.json');
   });
 
   it('accepts a manifest with zero keys', () => {
@@ -72,9 +72,9 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('tolerates CRLF line endings', () => {
-    const { meta, body } = parseFrontmatter('---\r\nstage: specs\r\n---\r\nbaton\r\n');
+    const { meta, body } = parseFrontmatter('---\r\nstage: specs\r\n---\r\nwaybill\r\n');
     assert.deepEqual(meta, { stage: 'specs' });
-    assert.equal(body, 'baton\n');
+    assert.equal(body, 'waybill\n');
   });
 
   it('does not coerce numbers or booleans', () => {

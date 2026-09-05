@@ -63,7 +63,7 @@ function strip(state) {
   const skipped = new Set(state.skipped);
   const lines = [];
 
-  const ticks = LEGS.filter((beat) => completed.has(beat.id)).map((beat) => `✓ ${beat.id}`);
+  const ticks = LEGS.filter((leg) => completed.has(leg.id)).map((leg) => `✓ ${leg.id}`);
   if (ticks.length > 0) lines.push(`${INDENT}${ticks.join('  ')}`);
 
   if (state.leg !== null) {
@@ -73,8 +73,8 @@ function strip(state) {
     lines.push(`${INDENT}▶ ${state.leg}${progress}`);
   }
 
-  for (const beat of LEGS) {
-    if (skipped.has(beat.id)) lines.push(`${INDENT}⚠ ${beat.id} (skipped)`);
+  for (const leg of LEGS) {
+    if (skipped.has(leg.id)) lines.push(`${INDENT}⚠ ${leg.id} (skipped)`);
   }
   return lines;
 }

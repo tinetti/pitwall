@@ -51,7 +51,7 @@ function committedCopy() {
 }
 
 const load = (dir) => loadBookings(dir, { knownStages: KNOWN_STAGES });
-const resolve = (dir, providers) => withPath(pathWithout('openspec'), () => resolveLeg(dir, providers));
+const resolve = (dir, bookings) => withPath(pathWithout('openspec'), () => resolveLeg(dir, bookings));
 
 describe('swapping one booking', () => {
   it('costs exactly one file edit, and that file is a booking', () => {
@@ -65,7 +65,7 @@ describe('swapping one booking', () => {
     assert.match(status[0], /^ ?M bookings\/openspec-execute\.md$/);
   });
 
-  it('moves the resolved beat, in the direction the new stamp demands', () => {
+  it('moves the resolved leg, in the direction the new stamp demands', () => {
     const dir = committedCopy();
     const fixture = cleanupFixture();
 
@@ -79,7 +79,7 @@ describe('swapping one booking', () => {
     assert.equal(after.leg, 'execute');
   });
 
-  it('moves the emitted command too — a hardcoded stamp would still pass on the beat alone', () => {
+  it('moves the emitted command too — a hardcoded stamp would still pass on the leg alone', () => {
     const dir = committedCopy();
     const fixture = cleanupFixture();
     const clean = { ignored: [], warnings: [] };

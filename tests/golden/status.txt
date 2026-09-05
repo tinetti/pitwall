@@ -1,3 +1,3 @@
-feat/thing · beat 5 of 7 (specs)
-  ✓ ideate  ✓ worktree  ✓ refine  ✓ contract
+feat/thing · leg 5 of 7 (specs)
+  ✓ ideate  ✓ bay  ✓ refine  ✓ contract
   ▶ specs

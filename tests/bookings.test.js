@@ -33,7 +33,7 @@ function bookingDir(files) {
 }
 
 describe('loadBookings', () => {
-  it('indexes bookings by leg and keeps the body as baton text', () => {
+  it('indexes bookings by leg and keeps the body as waybill text', () => {
     const dir = bookingDir({ 'ideation-contract.md': VALID });
     const bookings = loadBookings(dir);
 
@@ -64,24 +64,24 @@ describe('loadBookings', () => {
   });
 
   it('accepts a booking whose only stamp is stampCmd', () => {
-    const manifest = ['---', 'leg: execute', 'command: /spec:apply', 'model: opus', 'stampCmd: exit 0', '---', ''].join('\n');
-    const booking = loadBookings(bookingDir({ 'openspec-execute.md': manifest })).get('execute');
+    const md = ['---', 'leg: execute', 'command: /spec:apply', 'model: opus', 'stampCmd: exit 0', '---', ''].join('\n');
+    const booking = loadBookings(bookingDir({ 'openspec-execute.md': md })).get('execute');
     assert.equal(booking.stampCmd, 'exit 0');
     assert.equal(booking.stampPath, undefined);
   });
 
   for (const key of ['leg', 'command', 'model']) {
     it(`rejects a booking missing ${key}`, () => {
-      const manifest = VALID.split('\n')
+      const md = VALID.split('\n')
         .filter((line) => !line.startsWith(`${key}:`))
         .join('\n');
-      assert.throws(() => loadBookings(bookingDir({ 'broken.md': manifest })), new RegExp(`broken\\.md.*${key}`, 's'));
+      assert.throws(() => loadBookings(bookingDir({ 'broken.md': md })), new RegExp(`broken\\.md.*${key}`, 's'));
     });
   }
 
   it('rejects a booking with no stamp — a leg that can never complete stalls inference', () => {
-    const manifest = ['---', 'leg: contract', 'command: /ideation:ideation', 'model: opus', '---', ''].join('\n');
-    assert.throws(() => loadBookings(bookingDir({ 'nostamp.md': manifest })), /nostamp\.md.*stamp/s);
+    const md = ['---', 'leg: contract', 'command: /ideation:ideation', 'model: opus', '---', ''].join('\n');
+    assert.throws(() => loadBookings(bookingDir({ 'nostamp.md': md })), /nostamp\.md.*stamp/s);
   });
 
   it('rejects two bookings claiming the same leg, naming both files', () => {
@@ -103,8 +103,8 @@ describe('loadBookings', () => {
 
   for (const value of ['change-id', 'branch', 'none']) {
     it(`accepts \`argument: ${value}\``, () => {
-      const manifest = VALID.replace('handover: transfer', `handover: transfer\nargument: ${value}`);
-      assert.equal(loadBookings(bookingDir({ 'a.md': manifest })).get('contract').argument, value);
+      const md = VALID.replace('handover: transfer', `handover: transfer\nargument: ${value}`);
+      assert.equal(loadBookings(bookingDir({ 'a.md': md })).get('contract').argument, value);
     });
   }
 
@@ -114,9 +114,9 @@ describe('loadBookings', () => {
   });
 
   it('rejects an unknown `argument` source, naming the file and the values it could have used', () => {
-    const manifest = VALID.replace('handover: transfer', 'handover: transfer\nargument: change_id');
+    const md = VALID.replace('handover: transfer', 'handover: transfer\nargument: change_id');
     assert.throws(
-      () => loadBookings(bookingDir({ 'typo.md': manifest })),
+      () => loadBookings(bookingDir({ 'typo.md': md })),
       /typo\.md.*`argument`.*change-id.*branch.*none/s,
     );
   });

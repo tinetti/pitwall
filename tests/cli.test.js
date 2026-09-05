@@ -73,7 +73,7 @@ function cli(argv, cwd) {
 }
 
 describe('pw next', () => {
-  it('prints the baton for the beat the repository is actually on, and exits 0', () => {
+  it('prints the waybill for the leg the repository is actually on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['next'], fixture.dir);
 
@@ -82,7 +82,7 @@ describe('pw next', () => {
     assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'specs.txt'), 'utf8'));
   });
 
-  it('exits 0 even from a subdirectory of the worktree', () => {
+  it('exits 0 even from a subdirectory of the bay', () => {
     const fixture = specsFixture();
     const sub = path.join(fixture.dir, 'src', 'nested');
     fs.mkdirSync(sub, { recursive: true });
@@ -136,7 +136,7 @@ describe('pw next', () => {
     assert.equal(/\bat .*\.js:\d+/.test(result.err), false, 'a stack trace leaked into stderr');
   });
 
-  it('rejects an unknown option rather than printing the human baton to a --json consumer', () => {
+  it('rejects an unknown option rather than printing the human waybill to a --json consumer', () => {
     const result = cli(['next', '--jsonn'], specsFixture().dir);
 
     assert.equal(result.code, 2);
@@ -147,7 +147,7 @@ describe('pw next', () => {
 });
 
 describe('pw status', () => {
-  it('prints the position for the beat the repository is on, and exits 0', () => {
+  it('prints the position for the leg the repository is on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['status'], fixture.dir);
 
@@ -156,7 +156,7 @@ describe('pw status', () => {
     assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'status.txt'), 'utf8'));
   });
 
-  it('hands off nothing — the baton is `next`\'s answer, not this one\'s', () => {
+  it('hands off nothing — the waybill is `next`\'s answer, not this one\'s', () => {
     const result = cli(['status'], specsFixture().dir);
 
     assert.equal(result.out.includes('NEXT:'), false);
@@ -165,7 +165,7 @@ describe('pw status', () => {
     assert.match(cli(['next'], specsFixture().dir).out, /\/spec:propose/);
   });
 
-  it('reports ignored artifacts, which belong to the position rather than to the baton', () => {
+  it('reports ignored artifacts, which belong to the position rather than to the waybill', () => {
     const fixture = specsFixture();
     writeFile(path.join(fixture.dir, '.gitignore'), '/openspec/\n');
 
@@ -194,7 +194,7 @@ describe('pw status', () => {
 });
 
 describe('pw start', () => {
-  it('creates the worktree, names the cd target, and hands off the beat that follows', () => {
+  it('creates the bay, names the cd target, and hands off the leg that follows', () => {
     const repo = createRepo({ remote: true, originHead: true });
 
     const result = cli(['start', 'feat/demo'], repo);
@@ -204,13 +204,13 @@ describe('pw start', () => {
     assert.equal(result.err, '');
     assert.equal(fs.existsSync(target), true);
     assert.match(result.out, new RegExp(`^ {2}cd ${target}$`, 'm'));
-    // The baton must be resolved from the *new* tree: from the operator's cwd the bay leg
+    // The waybill must be resolved from the *new* tree: from the operator's cwd the bay leg
     // still reads as outstanding, and the command would hand back the leg it has just done.
     assert.match(result.out, /^feat\/demo · leg 3 of 7 \(refine\)$/m);
     assert.match(result.out, /✓ bay/);
   });
 
-  it('is a clean no-op on a second run, and still prints the baton', () => {
+  it('is a clean no-op on a second run, and still prints the waybill', () => {
     const repo = createRepo({ remote: true, originHead: true });
     cli(['start', 'feat/demo'], repo);
 
@@ -223,7 +223,7 @@ describe('pw start', () => {
     assert.match(result.out, /\(refine\)/);
   });
 
-  it('reports a no-op without a cd line when run from inside the worktree it would create', () => {
+  it('reports a no-op without a cd line when run from inside the bay it would create', () => {
     const repo = createRepo({ remote: true, originHead: true });
     cli(['start', 'feat/demo'], repo);
     const target = path.join(path.dirname(repo), `${path.basename(repo)}-feat-demo`);
@@ -265,7 +265,7 @@ describe('pw start', () => {
     assert.match(result.err, /not inside a git repository/);
   });
 
-  it('turns a git refusal into a remedy on stderr, with no stack trace and no half-baton', () => {
+  it('turns a git refusal into a remedy on stderr, with no stack trace and no half-waybill', () => {
     const result = cli(['start', 'feat/demo'], createRepo({ commit: false }));
 
     assert.equal(result.code, 2);
@@ -283,7 +283,7 @@ describe('pw argument parsing', () => {
     assert.equal(result.code, 0);
     assert.equal(result.err, '');
     assert.match(result.out, /Usage: pw <command> \[options\]/);
-    assert.equal(result.out.includes('NEXT:'), false, 'a baton was rendered instead of usage');
+    assert.equal(result.out.includes('NEXT:'), false, 'a waybill was rendered instead of usage');
   });
 
   it('answers --help before the subcommand too', () => {

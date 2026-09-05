@@ -9,7 +9,7 @@ import { renderWaybill, renderPosition } from '../src/waybill.js';
 import { resolveLeg } from '../src/inference.js';
 import { cleanupAll, createRepo, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
 import { ideateFixture } from './fixtures/ideate.js';
-import { worktreeFixture } from './fixtures/worktree.js';
+import { bayFixture } from './fixtures/bay.js';
 import { refineFixture } from './fixtures/refine.js';
 import { contractFixture } from './fixtures/contract.js';
 import { specsFixture } from './fixtures/specs.js';
@@ -77,7 +77,7 @@ function state(overrides = {}) {
 describe('renderWaybill golden output', () => {
   const cases = [
     ['ideate', ideateFixture],
-    ['worktree', worktreeFixture],
+    ['bay', bayFixture],
     ['refine', refineFixture],
     ['contract', contractFixture],
     ['specs', specsFixture],
@@ -86,16 +86,16 @@ describe('renderWaybill golden output', () => {
   ];
 
   for (const [id, build] of cases) {
-    it(`renders the ${id} beat`, () => {
+    it(`renders the ${id} leg`, () => {
       assertGolden(id, renderWaybill(resolve(build().dir), CLEAN));
     });
   }
 
-  it('renders the same beat as a position, which is what `pw status` prints', () => {
+  it('renders the same leg as a position, which is what `pw status` prints', () => {
     assertGolden('status', renderPosition(resolve(specsFixture().dir), CLEAN));
   });
 
-  it('renders a repository whose seven beats are all complete', () => {
+  it('renders a repository whose seven legs are all complete', () => {
     const repo = createRepo({ remote: true, originHead: true });
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract-data.json'), '{}\n');
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
@@ -112,8 +112,8 @@ describe('renderWaybill golden output', () => {
   });
 });
 
-describe('renderWaybill header and beat strip', () => {
-  it('names the branch, the position, and the current beat', () => {
+describe('renderWaybill header and leg strip', () => {
+  it('names the branch, the position, and the current leg', () => {
     assert.equal(
       renderWaybill(state(), CLEAN).split('\n')[0],
       `feat/session-handoff · leg 5 of ${LEGS.length} (specs)`,
@@ -126,7 +126,7 @@ describe('renderWaybill header and beat strip', () => {
     assert.equal(first.includes('null'), false);
   });
 
-  it('walks the beat list positionally, so completed beats after the current one keep their place', () => {
+  it('walks the leg list positionally, so completed legs after the current one keep their place', () => {
     const output = renderWaybill(
       state({ leg: 'bay', index: 2, completed: ['ideate', 'refine', 'contract'], booking: undefined }),
       CLEAN,
@@ -135,12 +135,12 @@ describe('renderWaybill header and beat strip', () => {
     assert.equal(output.split('\n')[2], '  ▶ bay');
   });
 
-  it('names a skipped beat rather than hiding it', () => {
+  it('names a skipped leg rather than hiding it', () => {
     const output = renderWaybill(state({ skipped: ['refine'] }), CLEAN);
     assert.match(output, /^ {2}⚠ refine \(skipped\)$/m);
   });
 
-  it('says every beat is complete when the walk fell off the end', () => {
+  it('says every leg is complete when the walk fell off the end', () => {
     const output = renderWaybill(
       state({ leg: null, index: 7, completed: LEGS.map((leg) => leg.id), booking: undefined }),
       CLEAN,
@@ -163,7 +163,7 @@ describe('renderWaybill progress', () => {
       CLEAN,
     );
 
-  it('reports n of N beside the current beat', () => {
+  it('reports n of N beside the current leg', () => {
     assert.match(withProgress(2, 4), /^ {2}▶ execute \(2 of 4 tasks\)$/m);
   });
 
@@ -173,22 +173,22 @@ describe('renderWaybill progress', () => {
     assert.equal(output.includes('complete'), false);
   });
 
-  it('reports n of n while the beat is still current', () => {
+  it('reports n of n while the leg is still current', () => {
     assert.match(withProgress(4, 4), /^ {2}▶ execute \(4 of 4 tasks\)$/m);
   });
 
-  it('omits the progress suffix on the six beats that carry none', () => {
+  it('omits the progress suffix on the six legs that carry none', () => {
     assert.match(renderWaybill(state(), CLEAN), /^ {2}▶ specs$/m);
   });
 });
 
 describe('renderWaybill NEXT block', () => {
   /**
-   * @param {Partial<import('../src/bookings.js').Booking>} provider
+   * @param {Partial<import('../src/bookings.js').Booking>} booking
    * @param {Partial<import('../src/inference.js').Inference>} [rest]
    */
-  const next = (provider, rest = {}) =>
-    renderWaybill(state({ ...rest, booking: { ...state().booking, ...provider } }), CLEAN);
+  const next = (booking, rest = {}) =>
+    renderWaybill(state({ ...rest, booking: { ...state().booking, ...booking } }), CLEAN);
 
   it('interpolates the command and the change id', () => {
     assert.match(next({}), /^ {2}\/spec:propose add-session-handoff$/m);
@@ -198,13 +198,13 @@ describe('renderWaybill NEXT block', () => {
     assert.match(next({}, { changeId: null }), /^ {2}\/spec:propose$/m);
   });
 
-  it('takes the branch instead when the manifest asks for it', () => {
-    // The cleanup beat's target finishes a *branch*; handing it a change id would name the wrong
+  it('takes the branch instead when the booking asks for it', () => {
+    // The cleanup leg's target finishes a *branch*; handing it a change id would name the wrong
     // thing entirely, and both facts are on the inference already.
     assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/session-handoff$/m);
   });
 
-  it('interpolates nothing at all when the manifest asks for no argument', () => {
+  it('interpolates nothing at all when the booking asks for no argument', () => {
     const output = next({ command: 'superpowers:some-skill', argument: 'none' });
     assert.match(output, /^ {2}superpowers:some-skill$/m);
     assert.equal(output.includes('add-session-handoff'), false);
@@ -214,11 +214,11 @@ describe('renderWaybill NEXT block', () => {
     assert.match(next({ command: '/mar', argument: 'branch' }, { branch: null }), /^ {2}\/mar$/m);
   });
 
-  it('sources model and effort from the manifest', () => {
+  it('sources model and effort from the booking', () => {
     assert.match(next({ model: 'some-model', effort: 'low' }), /^ {2}└ some-model · low effort$/m);
   });
 
-  it('omits the effort entirely when the manifest declares none, rather than defaulting', () => {
+  it('omits the effort entirely when the booking declares none, rather than defaulting', () => {
     const output = next({ model: 'some-model', effort: undefined });
     assert.match(output, /^ {2}└ some-model$/m);
     assert.equal(output.includes('effort'), false);
@@ -237,11 +237,11 @@ describe('renderWaybill NEXT block', () => {
     assert.match(next({ handover: 'hand the laptop to Dave' }), /^ {2}hand the laptop to Dave$/m);
   });
 
-  it('falls back to a bare instruction when the manifest declares no handover', () => {
+  it('falls back to a bare instruction when the booking declares no handover', () => {
     assert.match(next({ handover: undefined }), /^ {2}run:\n {2}\/spec:propose/m);
   });
 
-  it('carries the manifest body through as the baton prose', () => {
+  it('carries the booking body through as the waybill prose', () => {
     const output = next({ body: 'Do the thing.\n\nThen do the other thing.\n' });
     assert.match(output, /^ {2}Do the thing\.$/m);
     assert.match(output, /^ {2}Then do the other thing\.$/m);
@@ -249,7 +249,7 @@ describe('renderWaybill NEXT block', () => {
     assert.equal(output.includes('  \n'), false);
   });
 
-  it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
+  it('says so plainly when no booking is bound to the leg, instead of emitting an empty block', () => {
     const output = renderWaybill(state({ leg: 'bay', index: 2, booking: undefined }), CLEAN);
     assert.match(output, /NEXT:\n {2}no booking is bound to the bay leg/);
     assert.match(output, /bookings\//);
@@ -257,9 +257,9 @@ describe('renderWaybill NEXT block', () => {
 });
 
 describe('renderPosition', () => {
-  it('renders the header and the beat strip exactly as the baton does', () => {
-    const baton = renderWaybill(state(), CLEAN).split('\n\n')[0];
-    assert.equal(renderPosition(state(), CLEAN), `${baton}\n`);
+  it('renders the header and the leg strip exactly as the waybill does', () => {
+    const waybill = renderWaybill(state(), CLEAN).split('\n\n')[0];
+    assert.equal(renderPosition(state(), CLEAN), `${waybill}\n`);
   });
 
   it('emits no NEXT block — that is the whole difference', () => {
@@ -268,7 +268,7 @@ describe('renderPosition', () => {
     assert.equal(output.includes('/spec:propose'), false);
   });
 
-  it('keeps the preflight and the warnings, which are position facts rather than baton facts', () => {
+  it('keeps the preflight and the warnings, which are position facts rather than waybill facts', () => {
     const output = renderPosition(state({ warnings: ['inference said so'] }), {
       ignored: ['openspec/'],
       warnings: ['preflight said so'],
@@ -278,7 +278,7 @@ describe('renderPosition', () => {
     assert.match(output, /preflight said so/);
   });
 
-  it('still answers when the walk fell off the end, with no baton to fall back on', () => {
+  it('still answers when the walk fell off the end, with no waybill to fall back on', () => {
     const output = renderPosition(state({ leg: null, booking: undefined }), CLEAN);
     assert.match(output, /all 7 legs complete/);
     assert.equal(output.includes('NEXT:'), false);
@@ -303,7 +303,7 @@ describe('renderWaybill reports what it could not do', () => {
     assert.equal(renderWaybill(state(), CLEAN).includes('IGNORED BY GIT'), false);
   });
 
-  it('names the offending manifest when a detector could not run', () => {
+  it('names the offending booking when a stamp could not run', () => {
     const output = renderWaybill(
       state({ warnings: ['/bookings/openspec-specs.md: stampCmd command not found: nope'] }),
       CLEAN,

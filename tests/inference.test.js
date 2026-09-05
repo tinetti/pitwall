@@ -20,7 +20,7 @@ import {
   writeFile,
 } from './helpers/repo-fixture.js';
 import { ideateFixture } from './fixtures/ideate.js';
-import { worktreeFixture } from './fixtures/worktree.js';
+import { bayFixture } from './fixtures/bay.js';
 import { refineFixture } from './fixtures/refine.js';
 import { contractFixture } from './fixtures/contract.js';
 import { specsFixture } from './fixtures/specs.js';
@@ -37,15 +37,15 @@ const absent = () => pathWithout('openspec');
 
 /**
  * @param {string} dir
- * @param {Map<string, import('../src/bookings.js').Booking>} [providers]
+ * @param {Map<string, import('../src/bookings.js').Booking>} [bookings]
  */
-const resolve = (dir, providers) => withPath(absent(), () => resolveLeg(dir, providers));
+const resolve = (dir, bookings) => withPath(absent(), () => resolveLeg(dir, bookings));
 
 /**
  * @param {Record<string,string>} files basename → contents
  * @returns {Map<string, import('../src/bookings.js').Booking>}
  */
-function providerMap(files) {
+function bookingMap(files) {
   const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
   for (const [name, contents] of Object.entries(files)) writeFile(path.join(dir, name), contents);
@@ -53,7 +53,7 @@ function providerMap(files) {
 }
 
 describe('LEGS', () => {
-  it('is the fixed seven-beat model, in order', () => {
+  it('is the fixed seven-leg model, in order', () => {
     assert.deepEqual(KNOWN_STAGES, [
       'ideate',
       'bay',
@@ -65,51 +65,51 @@ describe('LEGS', () => {
     ]);
   });
 
-  it('has one fixture per beat and no strays — criterion 1 counts this directory', () => {
+  it('has one fixture per leg and no strays — criterion 1 counts this directory', () => {
     assert.equal(fs.readdirSync(FIXTURES).length, LEGS.length);
   });
 });
 
 describe('the shipped bookings', () => {
-  const providers = loadBookings(
+  const bookings = loadBookings(
     path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings'),
     { knownStages: KNOWN_STAGES },
   );
 
-  it('binds a baton to all seven beats — the loop is closed', () => {
-    // `worktree` and `cleanup` are wrapper-owned for *detection* and provider-bound for their
-    // batons: `owner` in LEGS says who supplies the detector, not who supplies the command and
+  it('binds a waybill to all seven legs — the loop is closed', () => {
+    // `bay` and `cleanup` are wrapper-owned for *stamping* and booking-bound for their
+    // waybills: `owner` in LEGS says who supplies the stamp, not who supplies the command and
     // the prose.
-    assert.deepEqual([...providers.keys()].sort(), [...KNOWN_STAGES].sort());
+    assert.deepEqual([...bookings.keys()].sort(), [...KNOWN_STAGES].sort());
   });
 
   it('names a model and an effort on every booking, so no leg can leave one unsourced', () => {
-    for (const provider of providers.values()) {
-      assert.ok(provider.model, `${provider.path} has no model`);
-      assert.ok(provider.effort, `${provider.path} has no effort`);
+    for (const booking of bookings.values()) {
+      assert.ok(booking.model, `${booking.path} has no model`);
+      assert.ok(booking.effort, `${booking.path} has no effort`);
     }
   });
 
   it('keeps refine and contract on one command, separated only by stamp', () => {
-    assert.equal(providers.get('refine').command, providers.get('contract').command);
+    assert.equal(bookings.get('refine').command, bookings.get('contract').command);
     assert.notEqual(
-      providers.get('refine').stampPath,
-      providers.get('contract').stampPath,
+      bookings.get('refine').stampPath,
+      bookings.get('contract').stampPath,
     );
   });
 
-  it('enters the contract beat through, because the refine baton promises one unbroken session', () => {
-    // `handover` describes how to *enter* a beat. The refine body tells the operator to carry
+  it('enters the contract leg through, because the refine waybill promises one unbroken session', () => {
+    // `handover` describes how to *enter* a leg. The refine body tells the operator to carry
     // straight on into the contract, so a `transfer` here would discard the interview that the
     // contract is written from — the two bookings would be giving opposite instructions.
-    assert.equal(providers.get('contract').handover, 'through');
+    assert.equal(bookings.get('contract').handover, 'through');
   });
 });
 
 describe('resolveLeg', () => {
   const cases = [
     ['ideate', ideateFixture],
-    ['bay', worktreeFixture],
+    ['bay', bayFixture],
     ['refine', refineFixture],
     ['contract', contractFixture],
     ['specs', specsFixture],
@@ -118,7 +118,7 @@ describe('resolveLeg', () => {
   ];
 
   for (const [id, build] of cases) {
-    it(`resolves the ${id} fixture to the ${id} beat`, () => {
+    it(`resolves the ${id} fixture to the ${id} leg`, () => {
       const fixture = build();
       const result = resolve(fixture.dir);
 
@@ -131,31 +131,31 @@ describe('resolveLeg', () => {
     });
   }
 
-  it('carries the provider manifest for the current beat', () => {
+  it('carries the booking for the current leg', () => {
     const result = resolve(specsFixture().dir);
     assert.equal(result.booking.command, '/spec:propose');
     assert.match(result.booking.path, /openspec-specs\.md$/);
   });
 
-  it('carries the manifest for a wrapper-owned beat too, since the baton is not the detector', () => {
-    const result = resolve(worktreeFixture().dir);
+  it('carries the booking for a wrapper-owned leg too, since the waybill is not the stamp', () => {
+    const result = resolve(bayFixture().dir);
     assert.equal(result.booking.command, '/waybill:start');
     assert.match(result.booking.path, /waybill-bay\.md$/);
   });
 
-  it('carries the manifest for the terminal beat too, so the loop closes on a baton', () => {
+  it('carries the booking for the terminal leg too, so the loop closes on a waybill', () => {
     const result = resolve(cleanupFixture().dir);
     assert.equal(result.leg, 'cleanup');
     assert.match(result.booking.path, /waybill-cleanup\.md$/);
   });
 
-  it('leaves provider undefined for a beat no manifest is bound to', () => {
-    // Every shipped beat is bound now, so the unbound render path is reachable only by an operator
-    // who removed a manifest — which is exactly the case worth keeping covered.
-    assert.equal(resolve(cleanupFixture().dir, providerMap({})).booking, undefined);
+  it('leaves booking undefined for a leg no booking is bound to', () => {
+    // Every shipped leg is bound now, so the unbound render path is reachable only by an operator
+    // who removed a booking — which is exactly the case worth keeping covered.
+    assert.equal(resolve(cleanupFixture().dir, bookingMap({})).booking, undefined);
   });
 
-  it('reports execute progress from the tasks list, and only on the execute beat', () => {
+  it('reports execute progress from the tasks list, and only on the execute leg', () => {
     assert.deepEqual(resolve(executeFixture().dir).progress, {
       done: 1,
       total: 3,
@@ -172,8 +172,8 @@ describe('resolveLeg', () => {
 
   it('adopts the CLI change id when the filesystem walk found none', () => {
     // The one case where the two sources disagree: `discoverChangeId` skips `archive` while the
-    // specs detector's `openspec/changes/*/tasks.md` still matches it, so the beat is `execute`
-    // with no id from disk. Phase 3 interpolates this id into the baton command.
+    // specs stamp's `openspec/changes/*/tasks.md` still matches it, so the leg is `execute`
+    // with no id from disk. Phase 3 interpolates this id into the waybill command.
     const { dir } = specsFixture();
     writeFile(path.join(dir, 'openspec', 'changes', 'archive', 'tasks.md'), '- [ ] a\n');
 
@@ -192,8 +192,8 @@ describe('resolveLeg', () => {
     assert.equal(result.changeId, CHANGE_ID);
   });
 
-  it('never names the current beat as skipped, even with later beats complete', () => {
-    const { dir } = worktreeFixture();
+  it('never names the current leg as skipped, even with later legs complete', () => {
+    const { dir } = bayFixture();
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract-data.json'), '{}\n');
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
 
@@ -204,7 +204,7 @@ describe('resolveLeg', () => {
   });
 
   it('names the hole a stage done by hand out of order leaves behind', () => {
-    const { dir } = worktreeFixture();
+    const { dir } = bayFixture();
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
     writeFile(path.join(dir, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [ ] a\n');
 
@@ -214,7 +214,7 @@ describe('resolveLeg', () => {
     assert.deepEqual(result.skipped, ['refine']);
   });
 
-  it('falls off the end of the walk when all seven beats pass', () => {
+  it('falls off the end of the walk when all seven legs pass', () => {
     const repo = createRepo({ remote: true, originHead: true });
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract-data.json'), '{}\n');
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
@@ -224,7 +224,7 @@ describe('resolveLeg', () => {
 
     // Registered off the `gwt` path on purpose: `bayIsDone` sees a linked worktree while
     // `cleanupIsDone` sees nothing at the convention path, which is the one arrangement in which
-    // all seven beats can be complete at once (both detectors are convention-keyed by design).
+    // all seven legs can be complete at once (both stamps are convention-keyed by design).
     const elsewhere = path.join(tempRoot(), 'off-convention');
     git(repo, ['worktree', 'add', '--no-track', '-b', 'feat/thing', elsewhere]);
 
@@ -237,7 +237,7 @@ describe('resolveLeg', () => {
     assert.equal(result.progress, undefined);
     assert.deepEqual(result.warnings, []);
 
-    // `index` alone cannot tell this state from a current `cleanup` beat; `beat` is the discriminator.
+    // `index` alone cannot tell this state from a current `cleanup` leg; `leg` is the discriminator.
     assert.equal(resolve(cleanupFixture().dir).index, result.index);
   });
 
@@ -253,12 +253,12 @@ describe('resolveLeg', () => {
     assert.equal(result.warnings[0].includes(fixture.dir), true);
   });
 
-  it('does not mark a beat skipped when nothing after it is complete', () => {
+  it('does not mark a leg skipped when nothing after it is complete', () => {
     assert.deepEqual(resolve(contractFixture().dir).skipped, []);
   });
 
   it('degrades a stamp that cannot run to a warning rather than a throw', () => {
-    const providers = providerMap({
+    const bookings = bookingMap({
       'broken-specs.md': [
         '---',
         'leg: specs',
@@ -270,7 +270,7 @@ describe('resolveLeg', () => {
       ].join('\n'),
     });
 
-    const result = resolve(specsFixture().dir, providers);
+    const result = resolve(specsFixture().dir, bookings);
     assert.equal(result.warnings.length, 1);
     assert.match(result.warnings[0], /broken-specs\.md/);
     assert.match(result.warnings[0], /pitwall-no-such-binary-xyz/);
