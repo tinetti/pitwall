@@ -116,13 +116,13 @@ describe('renderWaybill header and beat strip', () => {
   it('names the branch, the position, and the current beat', () => {
     assert.equal(
       renderWaybill(state(), CLEAN).split('\n')[0],
-      `feat/session-handoff · beat 5 of ${LEGS.length} (specs)`,
+      `feat/session-handoff · leg 5 of ${LEGS.length} (specs)`,
     );
   });
 
   it('drops the branch prefix entirely on a detached HEAD rather than printing null', () => {
     const first = renderWaybill(state({ branch: null }), CLEAN).split('\n')[0];
-    assert.equal(first, `beat 5 of ${LEGS.length} (specs)`);
+    assert.equal(first, `leg 5 of ${LEGS.length} (specs)`);
     assert.equal(first.includes('null'), false);
   });
 
@@ -145,7 +145,7 @@ describe('renderWaybill header and beat strip', () => {
       state({ beat: null, index: 7, completed: LEGS.map((leg) => leg.id), provider: undefined }),
       CLEAN,
     );
-    assert.equal(output.split('\n')[0], `feat/session-handoff · all ${LEGS.length} beats complete`);
+    assert.equal(output.split('\n')[0], `feat/session-handoff · all ${LEGS.length} legs complete`);
     assert.equal(output.includes('▶'), false);
     assert.match(output, /NEXT:\n {2}nothing to hand off/);
   });
@@ -251,7 +251,7 @@ describe('renderWaybill NEXT block', () => {
 
   it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
     const output = renderWaybill(state({ beat: 'bay', index: 2, provider: undefined }), CLEAN);
-    assert.match(output, /NEXT:\n {2}no provider manifest is bound to the bay beat/);
+    assert.match(output, /NEXT:\n {2}no booking is bound to the bay leg/);
     assert.match(output, /bookings\//);
   });
 });
@@ -280,7 +280,7 @@ describe('renderPosition', () => {
 
   it('still answers when the walk fell off the end, with no baton to fall back on', () => {
     const output = renderPosition(state({ beat: null, provider: undefined }), CLEAN);
-    assert.match(output, /all 7 beats complete/);
+    assert.match(output, /all 7 legs complete/);
     assert.equal(output.includes('NEXT:'), false);
   });
 

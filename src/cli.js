@@ -13,22 +13,22 @@ const USAGE = [
   'Usage: pw <command> [options]',
   '',
   'Commands:',
-  '  next            Where this change stands, and the baton for the next session',
-  '  start <branch>  Create the branch and its worktree, then hand off the next leg',
-  '  status          Where this change stands, without the baton',
+  '  next            Where this docket stands, and the waybill for the next leg',
+  '  start <branch>  Create the branch and its bay, then hand off the next leg',
+  '  status          Where this docket stands, without the waybill',
   '',
   'Options:',
-  '  --json  Print the raw inference result instead of the baton (`next` only)',
+  '  --json  Print the raw resolved state instead of the waybill (`next` only)',
   '  --help  Print this message',
 ].join('\n');
 
 /**
  * Options `next` accepts. Anything else is rejected rather than ignored: `--jsonn` silently
- * printing the human baton would be misparsed by the very script `--json` exists for.
+ * printing the human waybill would be misparsed by the very script `--json` exists for.
  */
 const NEXT_FLAGS = new Set(['--json']);
 
-/** Every line the CLI writes below a heading is indented by this, matching the baton. */
+/** Every line the CLI writes below a heading is indented by this, matching the waybill. */
 const INDENT = '  ';
 
 /**
@@ -37,7 +37,7 @@ const INDENT = '  ';
  *
  * `resolveLeg` deliberately never throws outside a repository — it returns a plausible-looking
  * `ideate` leg plus a warning — so the no-git case has to be caught before it, not around it. The
- * submodule redirect is applied first so the preflight, the inference, and any worktree created
+ * submodule redirect is applied first so the inspection, the resolved state, and any bay created
  * here all answer for one repository.
  *
  * @param {string} cwd
@@ -47,17 +47,17 @@ const INDENT = '  ';
 function repoRoot(cwd, io) {
   const root = checkoutRoot(superprojectRoot(cwd) ?? cwd);
   if (root === null) {
-    io.err(`pitwall: ${cwd} is not inside a git repository — run pw from a repository checkout\n`);
+    io.err(`waybill: ${cwd} is not inside a git repository — run pw from a repository checkout\n`);
     return null;
   }
   return root;
 }
 
 /**
- * `pw next` — resolve the leg, check the artifact paths, print one baton.
+ * `pw next` — resolve the leg, check the paper paths, print one waybill.
  *
- * Exit 0 whenever a leg resolved, preflight findings included: the preflight is advice and the
- * baton is the product. Exit 2 is reserved for "there is nothing here to answer about".
+ * Exit 0 whenever a leg resolved, inspection findings included: the inspection is advice and the
+ * waybill is the product. Exit 2 is reserved for "there is nothing here to answer about".
  *
  * @param {string} cwd
  * @param {string[]} args
@@ -67,7 +67,7 @@ function repoRoot(cwd, io) {
 function next(cwd, args, io) {
   const unknown = args.find((arg) => !NEXT_FLAGS.has(arg));
   if (unknown !== undefined) {
-    io.err(`pitwall: unknown option \`${unknown}\` for \`next\`\n${USAGE}\n`);
+    io.err(`waybill: unknown option \`${unknown}\` for \`next\`\n${USAGE}\n`);
     return 2;
   }
 
@@ -87,11 +87,11 @@ function next(cwd, args, io) {
 }
 
 /**
- * `pw status` — the same position `next` reports, with the handoff left out.
+ * `pw status` — the same last stamp `next` reports, with the handover left out.
  *
  * Deliberately takes no options at all, `--json` included. `next --json` already prints the whole
- * inference, and a second machine-readable surface would be a second thing to keep in step with a
- * shape that has no reason to differ.
+ * resolved state, and a second machine-readable surface would be a second thing to keep in step
+ * with a shape that has no reason to differ.
  *
  * @param {string} cwd
  * @param {string[]} args
@@ -101,7 +101,7 @@ function next(cwd, args, io) {
 function status(cwd, args, io) {
   // `--help` is answered by `run` before dispatch, so no argument reaching here is one we know.
   if (args.length > 0) {
-    io.err(`pitwall: unknown option \`${args[0]}\` for \`status\`\n${USAGE}\n`);
+    io.err(`waybill: unknown option \`${args[0]}\` for \`status\`\n${USAGE}\n`);
     return 2;
   }
 
@@ -116,12 +116,12 @@ function status(cwd, args, io) {
 }
 
 /**
- * `pw start <branch>` — cut the branch and its worktree, then hand off the leg that follows.
+ * `pw start <branch>` — cut the branch and its bay, then hand off the leg that follows.
  *
- * Leaving the operator at a bare success message would recreate the exact gap Pitwall exists to
- * close, so the baton is printed here too. It is resolved from the *new* worktree rather than from
- * `cwd`: the bay leg is detected from the branch that is checked out, so asked from the
- * operator's tree the answer would still be "create a worktree" — the leg just done.
+ * Leaving the operator at a bare success message would recreate the exact gap Waybill exists to
+ * close, so the waybill is printed here too. It is resolved from the *new* bay rather than from
+ * `cwd`: the bay leg is stamped from the branch that is checked out, so asked from the
+ * operator's tree the answer would still be "create a bay" — the leg just done.
  *
  * @param {string} cwd
  * @param {string[]} args
@@ -132,12 +132,12 @@ function start(cwd, args, io) {
   // `--help` is answered by `run` before dispatch, so no option reaching here is one we know.
   const flag = args.find((arg) => arg.startsWith('-'));
   if (flag !== undefined) {
-    io.err(`pitwall: unknown option \`${flag}\` for \`start\`\n${USAGE}\n`);
+    io.err(`waybill: unknown option \`${flag}\` for \`start\`\n${USAGE}\n`);
     return 2;
   }
   const [branch, ...extra] = args;
   if (!branch || extra.length > 0) {
-    io.err(`pitwall: \`start\` takes exactly one branch name\n${USAGE}\n`);
+    io.err(`waybill: \`start\` takes exactly one branch name\n${USAGE}\n`);
     return 2;
   }
 
@@ -152,21 +152,21 @@ function start(cwd, args, io) {
     // Only this module's own failures are operator-facing; anything else is a bug and must not be
     // dressed up as advice.
     if (!(error instanceof BayError)) throw error;
-    io.err(`pitwall: ${error.message}\n`);
+    io.err(`waybill: ${error.message}\n`);
     return 2;
   }
 
   const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
   const state = resolveLeg(result.path, providers);
 
-  // The one place Pitwall names a shell command rather than a slash command: a tool-invoked shell
+  // The one place Waybill names a shell command rather than a slash command: a tool-invoked shell
   // cannot change the operator's directory, so the move has to be theirs to make.
   const lines = isInside(result.path, cwd)
-    ? [`already inside the ${branch} worktree at ${result.path} — nothing to do`]
+    ? [`already inside the ${branch} bay at ${result.path} — nothing to do`]
     : [
         result.created
-          ? `worktree created at ${result.path}`
-          : `worktree already exists at ${result.path}`,
+          ? `bay created at ${result.path}`
+          : `bay already exists at ${result.path}`,
         `${INDENT}cd ${result.path}`,
       ];
 
@@ -197,7 +197,7 @@ export function run(argv = [], options = {}) {
   const [name, ...args] = argv;
 
   // Help is answered wherever it appears, not only as the first word: `pw next --help` is what an
-  // operator types, and rendering a baton in reply would be an answer to a different question.
+  // operator types, and rendering a waybill in reply would be an answer to a different question.
   if (argv.includes('--help') || argv.includes('-h')) {
     out(`${USAGE}\n`);
     return 0;
@@ -209,7 +209,7 @@ export function run(argv = [], options = {}) {
 
   const command = COMMANDS.get(name);
   if (!command) {
-    err(`pitwall: unknown command \`${name}\`\n${USAGE}\n`);
+    err(`waybill: unknown command \`${name}\`\n${USAGE}\n`);
     return 2;
   }
   return command(cwd, args, { out, err });

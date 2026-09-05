@@ -12,11 +12,11 @@ import { defaultBranch, hasRemote, resolveBayPath } from './repo.js';
  */
 
 /**
- * A failure the operator can act on, as opposed to a bug in Pitwall.
+ * A failure the operator can act on, as opposed to a bug in Waybill.
  *
  * This module is the first in `src/` that mutates the repository, and neither existing error tier
  * fits it: queries never throw because "I do not know" is a legitimate answer, and loaders throw
- * `file:line:` because a malformed manifest is a programming error. A bay that could not be
+ * `file:line:` because a malformed booking is a programming error. A bay that could not be
  * created is neither — it is a real failure with a real remedy, and the CLI is still the only layer
  * allowed to write to a stream or choose an exit code. Every message here therefore states what
  * failed and then, after an em dash, what to do about it.
@@ -115,7 +115,7 @@ export function isInside(target, cwd) {
  * The ref a brand-new branch is cut from.
  *
  * `gwt` always uses `origin/<default>` and always fetches; both are wrong in a repository with no
- * remote, which is the shape Pitwall's own repository has. And `defaultBranch` answers with the
+ * remote, which is the shape Waybill's own repository has. And `defaultBranch` answers with the
  * *current* branch when origin publishes no HEAD, so the composed ref is verified rather than
  * trusted — an unverified `origin/<whatever branch you happen to be on>` either fails obscurely or,
  * worse, resolves to the wrong commit.
@@ -232,7 +232,7 @@ export function startBay(branch, opts) {
   // infers `--orphan` on an unborn HEAD and *succeeds*, leaving a worktree with no history at all.
   if (!git(cwd, ['rev-parse', '--quiet', '--verify', 'HEAD']).ok) {
     throw new BayError(
-      'this repository has no commits yet — make an initial commit first, then start the worktree',
+      'this repository has no commits yet — make an initial commit first, then start the bay',
     );
   }
 
@@ -245,7 +245,7 @@ export function startBay(branch, opts) {
     ? git(cwd, ['worktree', 'add', target, branch])
     : git(cwd, ['worktree', 'add', '--no-track', '-b', branch, target, base]);
   if (!added.ok) {
-    throw new BayError(`could not create the worktree at ${target} — git said: ${firstLine(added.stderr)}`);
+    throw new BayError(`could not create the bay at ${target} — git said: ${firstLine(added.stderr)}`);
   }
 
   return { path: target, created: true, branchCreated: !branchExists, base };

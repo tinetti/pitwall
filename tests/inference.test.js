@@ -139,7 +139,7 @@ describe('resolveLeg', () => {
 
   it('carries the manifest for a wrapper-owned beat too, since the baton is not the detector', () => {
     const result = resolve(worktreeFixture().dir);
-    assert.equal(result.provider.command, '/pitwall:start');
+    assert.equal(result.provider.command, '/waybill:start');
     assert.match(result.provider.path, /waybill-bay\.md$/);
   });
 

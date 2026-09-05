@@ -128,7 +128,7 @@ export function inBay(cwd) {
 /**
  * The working tree root of `cwd` — the bay's own root when inside one.
  *
- * This is not interchangeable with {@link mainCheckout}: detectors resolve their globs against
+ * This is not interchangeable with {@link mainCheckout}: stamps resolve their globs against
  * the tree the operator is actually editing, while the main checkout is only the anchor derived
  * paths hang off.
  *

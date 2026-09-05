@@ -278,6 +278,6 @@ describe('criterion 7: zero dependencies and no build step', () => {
     });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /^Usage: pw <command> \[options\]$/m);
-    assert.match(result.stdout, /^ {2}status +Where this change stands, without the baton$/m);
+    assert.match(result.stdout, /^ {2}status +Where this docket stands, without the waybill$/m);
   });
 });

@@ -89,7 +89,7 @@ describe('pw next', () => {
 
     const result = cli(['next'], sub);
     assert.equal(result.code, 0);
-    assert.match(result.out, /beat 5 of 7 \(specs\)/);
+    assert.match(result.out, /leg 5 of 7 \(specs\)/);
   });
 
   it('reports ignored artifacts from a subdirectory — the preflight runs at the repository root', () => {
@@ -104,7 +104,7 @@ describe('pw next', () => {
     const result = cli(['next'], sub);
     assert.equal(result.code, 0, 'the preflight is advice; it never changes the exit code');
     assert.match(result.out, /^IGNORED BY GIT:$/m);
-    assert.match(result.out, /openspec\/ — artifacts written here will never be committed/);
+    assert.match(result.out, /openspec\/ — papers written here will never be committed/);
   });
 
   it('stays silent about git-ignored artifacts when the repository ignores none', () => {
@@ -206,7 +206,7 @@ describe('pw start', () => {
     assert.match(result.out, new RegExp(`^ {2}cd ${target}$`, 'm'));
     // The baton must be resolved from the *new* tree: from the operator's cwd the bay leg
     // still reads as outstanding, and the command would hand back the leg it has just done.
-    assert.match(result.out, /^feat\/demo · beat 3 of 7 \(refine\)$/m);
+    assert.match(result.out, /^feat\/demo · leg 3 of 7 \(refine\)$/m);
     assert.match(result.out, /✓ bay/);
   });
 

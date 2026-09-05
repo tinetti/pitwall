@@ -1,26 +1,26 @@
 import { LEGS } from './legs.js';
 
 /**
- * What the `handoff` key means for the operator. An unrecognised value is rendered verbatim rather
- * than dropped, so a provider can ask for something Pitwall never anticipated and still be obeyed.
+ * What the `handover` key means for the operator. An unrecognised value is rendered verbatim rather
+ * than dropped, so a booking can ask for something Waybill never anticipated and still be obeyed.
  */
 const HANDOVER_LINES = {
   transfer: '/clear, then run:',
   through: 'run:',
 };
 
-/** Used when a manifest declares no `handoff` at all — the command still needs introducing. */
+/** Used when a booking declares no `handover` at all — the command still needs introducing. */
 const DEFAULT_HANDOVER = 'run:';
 
 /**
- * The repository fact a manifest's `argument` names. Every value returns `null` when the repository
+ * The repository fact a booking's `argument` names. Every value returns `null` when the repository
  * cannot supply it, and a null argument is omitted rather than interpolated empty — a command with
  * a blank argument is one the next session cannot run.
  *
  * A Map rather than an object literal, for the same reason `src/cli.js` uses one for subcommands: a
- * manifest whose `argument` reads `constructor` would find a function on a plain object's prototype
- * and be called with the inference state. `loadBookings` rejects that key today, so this is depth
- * rather than a live bug — but the renderer is also reachable with hand-built providers from tests
+ * booking whose `argument` reads `constructor` would find a function on a plain object's prototype
+ * and be called with the resolved state. `loadBookings` rejects that key today, so this is depth
+ * rather than a live bug — but the renderer is also reachable with hand-built bookings from tests
  * and from `pw start`, and a lookup table should not depend on its only caller validating for it.
  */
 const ARGUMENT_SOURCES = new Map([
@@ -30,9 +30,9 @@ const ARGUMENT_SOURCES = new Map([
 ]);
 
 /**
- * What a manifest gets when it names no `argument`. It is the change id because that is what every
+ * What a booking gets when it names no `argument`. It is the change id because that is what every
  * spec-driven command takes; the key exists for the targets that take something else — the cleanup
- * beat finishes a *branch* — and for the ones that take nothing at all.
+ * leg finishes a *branch* — and for the ones that take nothing at all.
  */
 const DEFAULT_ARGUMENT = 'change-id';
 
@@ -45,14 +45,14 @@ const INDENT = '  ';
 function header(state) {
   const position =
     state.beat === null
-      ? `all ${LEGS.length} beats complete`
-      : `beat ${state.index} of ${LEGS.length} (${state.beat})`;
+      ? `all ${LEGS.length} legs complete`
+      : `leg ${state.index} of ${LEGS.length} (${state.beat})`;
   return state.branch ? `${state.branch} · ${position}` : position;
 }
 
 /**
- * The beat strip: a positional walk of {@link LEGS}, not a replay of `completed`. Work done out of
- * order leaves completed beats *after* the current one, and concatenating the two lists would print
+ * The leg strip: a positional walk of {@link LEGS}, not a replay of `completed`. Work done out of
+ * order leaves completed legs *after* the current one, and concatenating the two lists would print
  * them in an order the repository never went through.
  *
  * @param {import('./inference.js').Inference} state
@@ -80,7 +80,7 @@ function strip(state) {
 }
 
 /**
- * Indent the manifest body without leaving trailing whitespace on its blank lines — golden files
+ * Indent the booking body without leaving trailing whitespace on its blank lines — golden files
  * make every space load-bearing.
  *
  * @param {string} body
@@ -98,20 +98,20 @@ function waybillText(body) {
  */
 function nextBlock(state) {
   if (state.beat === null) {
-    return ['NEXT:', `${INDENT}nothing to hand off — every beat is complete`];
+    return ['NEXT:', `${INDENT}nothing to hand off — every leg is complete`];
   }
 
   const provider = state.provider;
   if (!provider) {
     return [
       'NEXT:',
-      `${INDENT}no provider manifest is bound to the ${state.beat} beat`,
-      `${INDENT}└ add one under bookings/ to give this beat a baton`,
+      `${INDENT}no booking is bound to the ${state.beat} leg`,
+      `${INDENT}└ add one under bookings/ to give this leg a waybill`,
     ];
   }
 
   // The argument is dropped whenever the repository cannot supply it — `changeId` is null until a
-  // change exists on disk, and the whole point of the specs beat is that it does not yet. Omitting
+  // change exists on disk, and the whole point of the specs leg is that it does not yet. Omitting
   // it is the only honest option: an empty one would hand the next session a command it cannot run.
   const source =
     ARGUMENT_SOURCES.get(provider.argument ?? DEFAULT_ARGUMENT) ??
@@ -119,8 +119,8 @@ function nextBlock(state) {
   const argument = source(state);
   const command = argument ? `${provider.command} ${argument}` : provider.command;
 
-  // Only what the manifest declares. A default effort would be a choice nobody made, attributed to
-  // a manifest that never made it.
+  // Only what the booking declares. A default effort would be a choice nobody made, attributed to
+  // a booking that never made it.
   const detail = provider.effort ? `${provider.model} · ${provider.effort} effort` : provider.model;
 
   return [
@@ -134,8 +134,8 @@ function nextBlock(state) {
 
 /**
  * Everything both surfaces say about the repository, appended to whatever `sections` they lead
- * with. The preflight and the warnings are facts about where the change stands, not about the
- * handoff, so `pw status` reports them exactly as `pw next` does.
+ * with. The inspection findings and the warnings are facts about where the docket stands, not about
+ * the handover, so `pw status` reports them exactly as `pw next` does.
  *
  * @param {string[]} sections
  * @param {import('./inference.js').Inference} state
@@ -148,14 +148,14 @@ function withFindings(sections, state, preflight) {
       [
         'IGNORED BY GIT:',
         ...preflight.ignored.map(
-          (query) => `${INDENT}⚠ ${query} — artifacts written here will never be committed`,
+          (query) => `${INDENT}⚠ ${query} — papers written here will never be committed`,
         ),
       ].join('\n'),
     );
   }
 
-  // Last, and never suppressed: a beat that silently repeats forever is the worst failure this tool
-  // has, and the warning naming the manifest is the only thing that explains it.
+  // Last, and never suppressed: a leg that silently repeats forever is the worst failure this tool
+  // has, and the warning naming the booking is the only thing that explains it.
   const warnings = [...state.warnings, ...(preflight.warnings ?? [])];
   if (warnings.length > 0) {
     sections.push(['WARNINGS:', ...warnings.map((text) => `${INDENT}⚠ ${text}`)].join('\n'));
@@ -168,7 +168,7 @@ function withFindings(sections, state, preflight) {
  * The whole product in one string: where this repository stands, and what the next session runs.
  *
  * Pure by design — no filesystem, no subprocess, no clock. `pw start` prints this same block after
- * creating a worktree, and a renderer that went looking for its own inputs could not be reused
+ * creating a bay, and a renderer that went looking for its own inputs could not be reused
  * there.
  *
  * @param {import('./inference.js').Inference} state
@@ -181,7 +181,7 @@ export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) 
 }
 
 /**
- * Position without a baton, for `pw status`.
+ * Where the docket stands, without a waybill, for `pw status`.
  *
  * The NEXT block is the one thing left out, and leaving it out is the point: re-issuing an
  * instruction to an operator who has already acted on it invites it to be run twice. Sharing

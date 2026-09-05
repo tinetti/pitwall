@@ -30,7 +30,7 @@ const STAMP_TIMEOUT_MS = 10000;
  *
  * @param {string} dir directory holding `*.md` bookings
  * @param {{ knownStages?: Iterable<string> }} [options] when `knownStages` is given, a booking
- *   binding any other leg is rejected; the beat model that owns that list lives in a later layer.
+ *   binding any other leg is rejected; the leg model that owns that list lives in a later layer.
  * @returns {Map<string, Booking>} keyed by leg
  * @throws {Error} on a malformed booking, a missing stamp, or two bookings claiming one leg
  */
@@ -203,7 +203,7 @@ export function bookingIsDone(booking, repoRoot) {
 }
 
 /**
- * The booking's verdict, plus the warnings a caller needs to explain a beat that never completes.
+ * The booking's verdict, plus the warnings a caller needs to explain a leg that never completes.
  * A stamp that cannot be executed at all — missing binary, spawn failure, timeout — is still
  * not-done, but silently so it would look identical to honest work remaining.
  *

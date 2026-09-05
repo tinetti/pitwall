@@ -7,8 +7,8 @@ import { checkoutRoot, currentBranch, defaultBranch, superprojectRoot } from './
 import { discoverChangeId, executeProgress } from './progress.js';
 
 /**
- * The bookings Pitwall ships with, used when a caller supplies none. Exported so the CLI can load
- * the same map it hands to {@link resolveLeg} and derive the preflight's artifact paths from it,
+ * The bookings Waybill ships with, used when a caller supplies none. Exported so the CLI can load
+ * the same map it hands to {@link resolveLeg} and derive the inspection's paper paths from it,
  * rather than keeping a second copy of this path.
  */
 export const BUILTIN_BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
@@ -46,10 +46,10 @@ function legIsDone(leg, state, providers, warnings) {
  * to the last complete one. That is deliberate: the operator is allowed to do any stage by hand,
  * and skipping ahead silently would hide it. Work done out of order surfaces in `skipped` instead.
  *
- * Repository and detector failures never throw: a directory outside any repository, a detached
- * HEAD, and a detector that cannot be executed are all reported through `warnings`, because a
+ * Repository and stamp failures never throw: a directory outside any repository, a detached
+ * HEAD, and a stamp that cannot be executed are all reported through `warnings`, because a
  * wrapper that crashes is worse than a wrapper that admits it does not know. Loading the built-in
- * manifests is the one exception — it sits in the loader tier, where a malformed manifest is a bug
+ * bookings is the one exception — it sits in the loader tier, where a malformed booking is a bug
  * and throws with the offending file and key.
  *
  * @param {string} cwd
@@ -102,7 +102,7 @@ export function resolveLeg(cwd, providers) {
     completed: LEGS.filter((_, i) => done[i]).map((entry) => entry.id),
     // Holes: incomplete legs that later work has already run past. The current leg is one of them
     // by construction and is excluded — it is already reported as `beat`, and naming it twice would
-    // have the baton say "do the bay leg" and "you skipped the bay leg" at once.
+    // have the waybill say "do the bay leg" and "you skipped the bay leg" at once.
     skipped: LEGS.filter((_, i) => !done[i] && i > current && i < lastComplete).map((entry) => entry.id),
     provider: beat === null ? undefined : manifests.get(beat),
     branch: state.branch,
@@ -114,8 +114,8 @@ export function resolveLeg(cwd, providers) {
     result.progress = executeProgress(root, result.changeId);
     // The filesystem walk only sees changes that already carry a `tasks.md`; `openspec list --json`
     // names active changes regardless. When only the CLI found one, take its id — phase 3
-    // interpolates `changeId` into the baton command, and an empty one beside a progress line for a
-    // named change is worse than no progress at all.
+    // interpolates `changeId` into the waybill's command, and an empty one beside a progress line
+    // for a named change is worse than no progress at all.
     result.changeId ??= result.progress.changeId;
   }
   return result;

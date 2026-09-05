@@ -8,15 +8,15 @@ import { inBay, isMerged, resolveBayPath } from './repo.js';
 
 /**
  * @typedef {{cwd:string, root:string, branch:string|null, base:string|null}} RepoState
- *   `root` is the working tree the detectors resolve against; `base` is the default branch.
+ *   `root` is the working tree the stamps resolve against; `base` is the default branch.
  */
 
 /**
  * The leg model. Fixed and exported rather than configurable: "7/7 legs" is a standing invariant
  * the success criteria are stated against, and the fixture directory is counted against this list.
  *
- * `owner` says who supplies the *detector*, not who supplies the baton — the two wrapper-owned
- * legs still take their command and model from a manifest, because the anchor and the terminus
+ * `owner` says who supplies the *stamp*, not who supplies the waybill — the two wrapper-owned
+ * legs still take their command and model from a booking, because the anchor and the terminus
  * must be relied on while everything they hand to is swappable.
  *
  * @type {Leg[]}
@@ -70,7 +70,7 @@ export function bayIsDone(state) {
  * "No bay remains" is judged against the `gwt` convention path only, deliberately matching
  * {@link bayIsDone}: a bay the operator registered somewhere else reads as cleaned up while it
  * is still checked out. Asking `git worktree list --porcelain` instead would answer for every path,
- * but then the two wrapper detectors would disagree about what "the bay" is, and the leg Pitwall
+ * but then the two wrapper stamps would disagree about what "the bay" is, and the leg Waybill
  * anchors on is the one at the convention path.
  *
  * @param {RepoState} state
@@ -85,7 +85,7 @@ export function cleanupIsDone(state) {
 }
 
 /**
- * The `ideate` leg leaves no artifact by design — a rough-ideation conversation writes nothing —
+ * The `ideate` leg leaves no papers by design — a rough-ideation conversation writes nothing —
  * so it is judged by what it must have preceded: any later leg being complete, or a branch other
  * than the default being checked out.
  *

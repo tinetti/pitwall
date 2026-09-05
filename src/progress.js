@@ -115,10 +115,10 @@ export function discoverChangeId(repoRoot) {
 }
 
 /**
- * `n of N` for the execute beat, from the CLI when it answers and from the tasks list when it does
- * not. Both paths return the same shape so the baton renderer never branches on which one ran.
+ * `n of N` for the execute leg, from the CLI when it answers and from the tasks list when it does
+ * not. Both paths return the same shape so the waybill renderer never branches on which one ran.
  *
- * `total: 0` is reported literally. A change with no tasks is a specs-beat problem, and calling
+ * `total: 0` is reported literally. A change with no tasks is a specs-leg problem, and calling
  * `0 of 0` complete would hide it.
  *
  * @param {string} repoRoot

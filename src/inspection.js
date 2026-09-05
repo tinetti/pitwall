@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 const CHECK_TIMEOUT_MS = 2000;
 
 /**
- * Where Pitwall itself writes, independent of any manifest. These are queried with a trailing slash
+ * Where Waybill itself writes, independent of any booking. These are queried with a trailing slash
  * for the same reason every derived path is — see {@link checkIgnored}.
  */
 const WRAPPER_PATHS = ['docs/ideation/', 'openspec/'];
@@ -39,9 +39,9 @@ function deglob(pattern) {
 
   // git treats a trailing slash as "this is a directory", and a directory-only rule (`/openspec/`)
   // matches a *nonexistent* path only when the query carries one — which is every path this
-  // preflight asks about. A truncated pattern is a directory by construction; an untruncated one is
-  // a directory too unless its last segment carries an extension, and adding the slash to a file
-  // query would stop a file rule matching. `Makefile`-shaped artifacts are the known blind spot,
+  // inspection asks about. A truncated pattern is a directory by construction; an untruncated one
+  // is a directory too unless its last segment carries an extension, and adding the slash to a file
+  // query would stop a file rule matching. `Makefile`-shaped papers are the known blind spot,
   // and a missed report is the safe side of that trade.
   const query = literal.join('/');
   const truncated = literal.length < segments.length;
@@ -64,8 +64,8 @@ function collapse(paths) {
 }
 
 /**
- * Every location the workflow will write, derived from the manifests rather than from a list in
- * code — a swapped provider brings its own artifact directory with it.
+ * Every location the workflow will write, derived from the bookings rather than from a list in
+ * code — a swapped carrier brings its own paper directory with it.
  *
  * @param {Map<string, Pick<import('./bookings.js').Booking,'stampPath'>>} providers
  * @returns {string[]} repo-relative queries, ready for {@link checkIgnored}
@@ -90,7 +90,7 @@ export function paperPaths(providers) {
  * `cwd` must be the repository root: check-ignore resolves its arguments against the process
  * directory, so the same query run from a subdirectory silently matches nothing.
  *
- * Nothing here throws. The preflight is advice printed beside a baton, and a wrapper that crashes
+ * Nothing here throws. The inspection is advice printed beside a waybill, and a wrapper that crashes
  * because it could not offer advice is worse than one that says it could not.
  *
  * @param {string} cwd repository root
