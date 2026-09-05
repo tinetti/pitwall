@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { inBay, isMerged, resolveBayPath } from './repo.js';
 
 /**
- * @typedef {{id:string, owner:'provider'|'wrapper', progress?:boolean}} Leg
+ * @typedef {{id:string, owner:'booking'|'wrapper', progress?:boolean}} Leg
  */
 
 /**
@@ -22,12 +22,12 @@ import { inBay, isMerged, resolveBayPath } from './repo.js';
  * @type {Leg[]}
  */
 export const LEGS = [
-  { id: 'ideate', owner: 'provider' },
+  { id: 'ideate', owner: 'booking' },
   { id: 'bay', owner: 'wrapper' },
-  { id: 'refine', owner: 'provider' },
-  { id: 'contract', owner: 'provider' },
-  { id: 'specs', owner: 'provider' },
-  { id: 'execute', owner: 'provider', progress: true },
+  { id: 'refine', owner: 'booking' },
+  { id: 'contract', owner: 'booking' },
+  { id: 'specs', owner: 'booking' },
+  { id: 'execute', owner: 'booking', progress: true },
   { id: 'cleanup', owner: 'wrapper' },
 ];
 

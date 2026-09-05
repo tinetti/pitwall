@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 
 /**
- * @typedef {{ignored:string[], warnings:string[]}} Preflight
+ * @typedef {{ignored:string[], warnings:string[]}} Inspection
  *   `warnings` is additive to the shape the spec names: `git check-ignore` has three outcomes, not
  *   two, and folding "git refused to answer" into "nothing is ignored" would make this check
  *   silently useless in exactly the repositories worth checking.
@@ -67,14 +67,14 @@ function collapse(paths) {
  * Every location the workflow will write, derived from the bookings rather than from a list in
  * code — a swapped carrier brings its own paper directory with it.
  *
- * @param {Map<string, Pick<import('./bookings.js').Booking,'stampPath'>>} providers
+ * @param {Map<string, Pick<import('./bookings.js').Booking,'stampPath'>>} bookings
  * @returns {string[]} repo-relative queries, ready for {@link checkIgnored}
  */
-export function paperPaths(providers) {
+export function paperPaths(bookings) {
   const paths = [...WRAPPER_PATHS];
-  for (const provider of providers.values()) {
-    if (!provider.stampPath) continue;
-    const query = deglob(provider.stampPath);
+  for (const booking of bookings.values()) {
+    if (!booking.stampPath) continue;
+    const query = deglob(booking.stampPath);
     if (query !== null) paths.push(query);
   }
   return collapse(paths);
@@ -96,7 +96,7 @@ export function paperPaths(providers) {
  * @param {string} cwd repository root
  * @param {string[]} paths repo-relative; directories must carry a trailing slash, or a
  *   directory-only `.gitignore` rule will not match a directory that does not exist yet
- * @returns {Preflight}
+ * @returns {Inspection}
  */
 export function checkIgnored(cwd, paths) {
   const queries = paths.filter((query) => query !== '');

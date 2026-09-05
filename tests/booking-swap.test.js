@@ -71,12 +71,12 @@ describe('swapping one booking', () => {
 
     // Every task is ticked, so the shipped `stampCmd` passes and execute is behind us.
     const before = resolve(fixture.dir, load(dir));
-    assert.equal(before.beat, 'cleanup');
+    assert.equal(before.leg, 'cleanup');
 
     // The replacement looks for a marker file that does not exist, so execute becomes current again.
     writeFile(path.join(dir, 'openspec-execute.md'), ALTERNATE);
     const after = resolve(fixture.dir, load(dir));
-    assert.equal(after.beat, 'execute');
+    assert.equal(after.leg, 'execute');
   });
 
   it('moves the emitted command too — a hardcoded stamp would still pass on the beat alone', () => {

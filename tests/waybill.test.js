@@ -54,11 +54,11 @@ function assertGolden(name, actual) {
  */
 function state(overrides = {}) {
   return {
-    beat: 'specs',
+    leg: 'specs',
     index: 5,
     completed: ['ideate', 'bay', 'refine', 'contract'],
     skipped: [],
-    provider: {
+    booking: {
       leg: 'specs',
       command: '/spec:propose',
       model: 'placeholder-model',
@@ -107,7 +107,7 @@ describe('renderWaybill golden output', () => {
     git(repo, ['worktree', 'add', '--no-track', '-b', 'feat/thing', elsewhere]);
 
     const result = resolve(elsewhere);
-    assert.equal(result.beat, null);
+    assert.equal(result.leg, null);
     assertGolden('complete', renderWaybill(result, CLEAN));
   });
 });
@@ -128,7 +128,7 @@ describe('renderWaybill header and beat strip', () => {
 
   it('walks the beat list positionally, so completed beats after the current one keep their place', () => {
     const output = renderWaybill(
-      state({ beat: 'bay', index: 2, completed: ['ideate', 'refine', 'contract'], provider: undefined }),
+      state({ leg: 'bay', index: 2, completed: ['ideate', 'refine', 'contract'], booking: undefined }),
       CLEAN,
     );
     assert.equal(output.split('\n')[1], '  ✓ ideate  ✓ refine  ✓ contract');
@@ -142,7 +142,7 @@ describe('renderWaybill header and beat strip', () => {
 
   it('says every beat is complete when the walk fell off the end', () => {
     const output = renderWaybill(
-      state({ beat: null, index: 7, completed: LEGS.map((leg) => leg.id), provider: undefined }),
+      state({ leg: null, index: 7, completed: LEGS.map((leg) => leg.id), booking: undefined }),
       CLEAN,
     );
     assert.equal(output.split('\n')[0], `feat/session-handoff · all ${LEGS.length} legs complete`);
@@ -155,7 +155,7 @@ describe('renderWaybill progress', () => {
   const withProgress = (done, total) =>
     renderWaybill(
       state({
-        beat: 'execute',
+        leg: 'execute',
         index: 6,
         completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
         progress: { done, total, source: 'tasks-md', changeId: CHANGE_ID },
@@ -188,7 +188,7 @@ describe('renderWaybill NEXT block', () => {
    * @param {Partial<import('../src/inference.js').Inference>} [rest]
    */
   const next = (provider, rest = {}) =>
-    renderWaybill(state({ ...rest, provider: { ...state().provider, ...provider } }), CLEAN);
+    renderWaybill(state({ ...rest, booking: { ...state().booking, ...provider } }), CLEAN);
 
   it('interpolates the command and the change id', () => {
     assert.match(next({}), /^ {2}\/spec:propose add-session-handoff$/m);
@@ -250,7 +250,7 @@ describe('renderWaybill NEXT block', () => {
   });
 
   it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
-    const output = renderWaybill(state({ beat: 'bay', index: 2, provider: undefined }), CLEAN);
+    const output = renderWaybill(state({ leg: 'bay', index: 2, booking: undefined }), CLEAN);
     assert.match(output, /NEXT:\n {2}no booking is bound to the bay leg/);
     assert.match(output, /bookings\//);
   });
@@ -279,7 +279,7 @@ describe('renderPosition', () => {
   });
 
   it('still answers when the walk fell off the end, with no baton to fall back on', () => {
-    const output = renderPosition(state({ beat: null, provider: undefined }), CLEAN);
+    const output = renderPosition(state({ leg: null, booking: undefined }), CLEAN);
     assert.match(output, /all 7 legs complete/);
     assert.equal(output.includes('NEXT:'), false);
   });

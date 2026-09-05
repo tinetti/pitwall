@@ -230,11 +230,11 @@ describe('the worked alternative binding in examples/', () => {
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.
     const baton = renderWaybill({
-      beat: 'execute',
+      leg: 'execute',
       index: 6,
       completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
       skipped: [],
-      provider,
+      booking: provider,
       branch: 'feat/thing',
       changeId: 'add-thing',
       warnings: [],

@@ -219,7 +219,7 @@ export function startBay(branch, opts) {
   }
 
   // Includes the main checkout, which is the likeliest case of all: standing on the feature branch
-  // and asking for its worktree. git's own message names the path but not the way out.
+  // and asking for its bay. git's own message names the path but not the way out.
   const elsewhere = registered.find((record) => record.branch === branch);
   if (elsewhere) {
     throw new BayError(

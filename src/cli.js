@@ -74,15 +74,15 @@ function next(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
-  const state = resolveLeg(cwd, providers);
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(cwd, bookings);
 
   if (args.includes('--json')) {
     io.out(`${JSON.stringify(state, null, 2)}\n`);
     return 0;
   }
 
-  io.out(renderWaybill(state, checkIgnored(root, paperPaths(providers))));
+  io.out(renderWaybill(state, checkIgnored(root, paperPaths(bookings))));
   return 0;
 }
 
@@ -108,10 +108,10 @@ function status(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
-  const state = resolveLeg(cwd, providers);
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(cwd, bookings);
 
-  io.out(renderPosition(state, checkIgnored(root, paperPaths(providers))));
+  io.out(renderPosition(state, checkIgnored(root, paperPaths(bookings))));
   return 0;
 }
 
@@ -120,7 +120,7 @@ function status(cwd, args, io) {
  *
  * Leaving the operator at a bare success message would recreate the exact gap Waybill exists to
  * close, so the waybill is printed here too. It is resolved from the *new* bay rather than from
- * `cwd`: the bay leg is stamped from the branch that is checked out, so asked from the
+ * `cwd`: the bay leg takes its stamp from the branch that is checked out, so asked from the
  * operator's tree the answer would still be "create a bay" — the leg just done.
  *
  * @param {string} cwd
@@ -156,8 +156,8 @@ function start(cwd, args, io) {
     return 2;
   }
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
-  const state = resolveLeg(result.path, providers);
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(result.path, bookings);
 
   // The one place Waybill names a shell command rather than a slash command: a tool-invoked shell
   // cannot change the operator's directory, so the move has to be theirs to make.
@@ -171,7 +171,7 @@ function start(cwd, args, io) {
       ];
 
   io.out(`${lines.join('\n')}\n\n`);
-  io.out(renderWaybill(state, checkIgnored(result.path, paperPaths(providers))));
+  io.out(renderWaybill(state, checkIgnored(result.path, paperPaths(bookings))));
   return 0;
 }
 

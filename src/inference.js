@@ -14,27 +14,27 @@ import { discoverChangeId, executeProgress } from './progress.js';
 export const BUILTIN_BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
 
 /**
- * @typedef {{beat:string|null, index:number, completed:string[], skipped:string[],
+ * @typedef {{leg:string|null, index:number, completed:string[], skipped:string[],
  *            progress?:{done:number,total:number,source:string,changeId:string|null},
- *            provider?:import('./bookings.js').Booking, branch:string|null,
+ *            booking?:import('./bookings.js').Booking, branch:string|null,
  *            changeId:string|null, warnings:string[]}} Inference
  */
 
 /**
  * @param {import('./legs.js').Leg} leg
  * @param {import('./legs.js').RepoState} state
- * @param {Map<string, import('./bookings.js').Booking>} providers
+ * @param {Map<string, import('./bookings.js').Booking>} bookings
  * @param {string[]} warnings collected in place
  * @returns {boolean}
  */
-function legIsDone(leg, state, providers, warnings) {
+function legIsDone(leg, state, bookings, warnings) {
   if (leg.id === 'bay') return bayIsDone(state);
   if (leg.id === 'cleanup') return cleanupIsDone(state);
 
-  const provider = providers.get(leg.id);
-  if (!provider) return false;
+  const booking = bookings.get(leg.id);
+  if (!booking) return false;
 
-  const result = evaluateBooking(provider, state.root);
+  const result = evaluateBooking(booking, state.root);
   warnings.push(...result.warnings);
   return result.done;
 }
@@ -53,13 +53,13 @@ function legIsDone(leg, state, providers, warnings) {
  * and throws with the offending file and key.
  *
  * @param {string} cwd
- * @param {Map<string, import('./bookings.js').Booking>} [providers] defaults to the built-ins
+ * @param {Map<string, import('./bookings.js').Booking>} [bookings] defaults to the built-ins
  * @returns {Inference}
  */
-export function resolveLeg(cwd, providers) {
+export function resolveLeg(cwd, bookings) {
   /** @type {string[]} */
   const warnings = [];
-  const manifests = providers ?? loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  bookings ??= loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
 
   // Inside a submodule every git query answers for the submodule's own tree, so the legs would be
   // resolved against a repository the operator's change does not live in. Anchor on the
@@ -74,11 +74,11 @@ export function resolveLeg(cwd, providers) {
   if (root === null) {
     warnings.push(`not a git repository: ${cwd}`);
     return {
-      beat: LEGS[0].id,
+      leg: LEGS[0].id,
       index: 1,
       completed: [],
       skipped: [],
-      provider: manifests.get(LEGS[0].id),
+      booking: bookings.get(LEGS[0].id),
       branch: null,
       changeId: null,
       warnings,
@@ -89,28 +89,28 @@ export function resolveLeg(cwd, providers) {
   const state = { cwd: anchor, root, branch: currentBranch(anchor), base: defaultBranch(anchor) };
 
   // Every leg but `ideate` is judged on its own; `ideate` is judged on what came after it.
-  const done = LEGS.map((leg, i) => (i === 0 ? false : legIsDone(leg, state, manifests, warnings)));
+  const done = LEGS.map((leg, i) => (i === 0 ? false : legIsDone(leg, state, bookings, warnings)));
   done[0] = ideateIsDone(state, done.some(Boolean));
 
   const current = done.indexOf(false);
-  const beat = current === -1 ? null : LEGS[current].id;
+  const leg = current === -1 ? null : LEGS[current].id;
   const lastComplete = done.lastIndexOf(true);
 
   const result = {
-    beat,
+    leg,
     index: current === -1 ? LEGS.length : current + 1,
     completed: LEGS.filter((_, i) => done[i]).map((entry) => entry.id),
     // Holes: incomplete legs that later work has already run past. The current leg is one of them
-    // by construction and is excluded — it is already reported as `beat`, and naming it twice would
+    // by construction and is excluded — it is already reported as `leg`, and naming it twice would
     // have the waybill say "do the bay leg" and "you skipped the bay leg" at once.
     skipped: LEGS.filter((_, i) => !done[i] && i > current && i < lastComplete).map((entry) => entry.id),
-    provider: beat === null ? undefined : manifests.get(beat),
+    booking: leg === null ? undefined : bookings.get(leg),
     branch: state.branch,
     changeId: discoverChangeId(root),
     warnings,
   };
 
-  if (beat === 'execute') {
+  if (leg === 'execute') {
     result.progress = executeProgress(root, result.changeId);
     // The filesystem walk only sees changes that already carry a `tasks.md`; `openspec list --json`
     // names active changes regardless. When only the CLI found one, take its id — phase 3

@@ -1,5 +1,5 @@
 ---
-description: "Waybill — where this docket stands, without the waybill"
+description: "Where this docket stands, without the waybill"
 allowed-tools: Bash(node:*), Bash(test:*), Bash(echo:*)
 ---
 

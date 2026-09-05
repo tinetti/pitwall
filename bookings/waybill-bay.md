@@ -7,7 +7,7 @@ handover: through
 stampCmd: false
 ---
 Cut the feature branch and its isolated bay, then move into it — every leg after this one happens
-in the new tree. Pass the branch name as the argument (`feat/<short-name>`) and read the `cd` line
+in the new bay. Pass the branch name as the argument (`feat/<short-name>`) and read the `cd` line
 the command prints: a tool-invoked shell cannot change your directory for you.
 
 This leg's `stampCmd` never succeeds on purpose, exactly as the ideate leg's does not: Waybill takes

@@ -119,11 +119,11 @@ describe('pw next', () => {
     assert.equal(result.code, 0);
     assert.equal(result.err, '');
     const state = JSON.parse(result.out);
-    assert.equal(state.beat, 'specs');
+    assert.equal(state.leg, 'specs');
     assert.equal(state.index, 5);
     assert.equal(state.branch, fixture.branch);
     assert.deepEqual(state.completed, ['ideate', 'bay', 'refine', 'contract']);
-    assert.equal(state.provider.command, '/spec:propose');
+    assert.equal(state.booking.command, '/spec:propose');
   });
 
   it('explains itself in one line outside a repository and exits 2, with no stack trace', () => {

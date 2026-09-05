@@ -122,6 +122,6 @@ describe('parseFrontmatter — rejected syntax', () => {
   });
 
   it('names a default source label when no path is given', () => {
-    assert.throws(() => parseFrontmatter('---\n- one\n---\n'), /<manifest>:2:/);
+    assert.throws(() => parseFrontmatter('---\n- one\n---\n'), /<frontmatter>:2:/);
   });
 });

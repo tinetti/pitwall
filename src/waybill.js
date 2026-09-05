@@ -44,9 +44,9 @@ const INDENT = '  ';
  */
 function header(state) {
   const position =
-    state.beat === null
+    state.leg === null
       ? `all ${LEGS.length} legs complete`
-      : `leg ${state.index} of ${LEGS.length} (${state.beat})`;
+      : `leg ${state.index} of ${LEGS.length} (${state.leg})`;
   return state.branch ? `${state.branch} · ${position}` : position;
 }
 
@@ -66,11 +66,11 @@ function strip(state) {
   const ticks = LEGS.filter((beat) => completed.has(beat.id)).map((beat) => `✓ ${beat.id}`);
   if (ticks.length > 0) lines.push(`${INDENT}${ticks.join('  ')}`);
 
-  if (state.beat !== null) {
+  if (state.leg !== null) {
     const progress = state.progress
       ? ` (${state.progress.done} of ${state.progress.total} tasks)`
       : '';
-    lines.push(`${INDENT}▶ ${state.beat}${progress}`);
+    lines.push(`${INDENT}▶ ${state.leg}${progress}`);
   }
 
   for (const beat of LEGS) {
@@ -97,15 +97,15 @@ function waybillText(body) {
  * @returns {string[]}
  */
 function nextBlock(state) {
-  if (state.beat === null) {
+  if (state.leg === null) {
     return ['NEXT:', `${INDENT}nothing to hand off — every leg is complete`];
   }
 
-  const provider = state.provider;
-  if (!provider) {
+  const booking = state.booking;
+  if (!booking) {
     return [
       'NEXT:',
-      `${INDENT}no booking is bound to the ${state.beat} leg`,
+      `${INDENT}no booking is bound to the ${state.leg} leg`,
       `${INDENT}└ add one under bookings/ to give this leg a waybill`,
     ];
   }
@@ -114,21 +114,21 @@ function nextBlock(state) {
   // change exists on disk, and the whole point of the specs leg is that it does not yet. Omitting
   // it is the only honest option: an empty one would hand the next session a command it cannot run.
   const source =
-    ARGUMENT_SOURCES.get(provider.argument ?? DEFAULT_ARGUMENT) ??
+    ARGUMENT_SOURCES.get(booking.argument ?? DEFAULT_ARGUMENT) ??
     ARGUMENT_SOURCES.get(DEFAULT_ARGUMENT);
   const argument = source(state);
-  const command = argument ? `${provider.command} ${argument}` : provider.command;
+  const command = argument ? `${booking.command} ${argument}` : booking.command;
 
   // Only what the booking declares. A default effort would be a choice nobody made, attributed to
   // a booking that never made it.
-  const detail = provider.effort ? `${provider.model} · ${provider.effort} effort` : provider.model;
+  const detail = booking.effort ? `${booking.model} · ${booking.effort} effort` : booking.model;
 
   return [
     'NEXT:',
-    `${INDENT}${HANDOVER_LINES[provider.handover] ?? provider.handover ?? DEFAULT_HANDOVER}`,
+    `${INDENT}${HANDOVER_LINES[booking.handover] ?? booking.handover ?? DEFAULT_HANDOVER}`,
     `${INDENT}${command}`,
     `${INDENT}└ ${detail}`,
-    ...waybillText(provider.body),
+    ...waybillText(booking.body),
   ];
 }
 
@@ -139,7 +139,7 @@ function nextBlock(state) {
  *
  * @param {string[]} sections
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Preflight} preflight
+ * @param {import('./inspection.js').Inspection} preflight
  * @returns {string} ends with exactly one newline
  */
 function withFindings(sections, state, preflight) {
@@ -172,7 +172,7 @@ function withFindings(sections, state, preflight) {
  * there.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Preflight} [preflight]
+ * @param {import('./inspection.js').Inspection} [preflight]
  * @returns {string} ends with exactly one newline
  */
 export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) {
@@ -189,7 +189,7 @@ export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) 
  * about where the same repository stands.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Preflight} [preflight]
+ * @param {import('./inspection.js').Inspection} [preflight]
  * @returns {string} ends with exactly one newline
  */
 export function renderPosition(state, preflight = { ignored: [], warnings: [] }) {

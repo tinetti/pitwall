@@ -122,7 +122,7 @@ describe('resolveLeg', () => {
       const fixture = build();
       const result = resolve(fixture.dir);
 
-      assert.equal(result.beat, id);
+      assert.equal(result.leg, id);
       assert.equal(result.index, KNOWN_STAGES.indexOf(id) + 1);
       assert.deepEqual(result.completed, KNOWN_STAGES.slice(0, KNOWN_STAGES.indexOf(id)));
       assert.deepEqual(result.skipped, []);
@@ -133,26 +133,26 @@ describe('resolveLeg', () => {
 
   it('carries the provider manifest for the current beat', () => {
     const result = resolve(specsFixture().dir);
-    assert.equal(result.provider.command, '/spec:propose');
-    assert.match(result.provider.path, /openspec-specs\.md$/);
+    assert.equal(result.booking.command, '/spec:propose');
+    assert.match(result.booking.path, /openspec-specs\.md$/);
   });
 
   it('carries the manifest for a wrapper-owned beat too, since the baton is not the detector', () => {
     const result = resolve(worktreeFixture().dir);
-    assert.equal(result.provider.command, '/waybill:start');
-    assert.match(result.provider.path, /waybill-bay\.md$/);
+    assert.equal(result.booking.command, '/waybill:start');
+    assert.match(result.booking.path, /waybill-bay\.md$/);
   });
 
   it('carries the manifest for the terminal beat too, so the loop closes on a baton', () => {
     const result = resolve(cleanupFixture().dir);
-    assert.equal(result.beat, 'cleanup');
-    assert.match(result.provider.path, /waybill-cleanup\.md$/);
+    assert.equal(result.leg, 'cleanup');
+    assert.match(result.booking.path, /waybill-cleanup\.md$/);
   });
 
   it('leaves provider undefined for a beat no manifest is bound to', () => {
     // Every shipped beat is bound now, so the unbound render path is reachable only by an operator
     // who removed a manifest — which is exactly the case worth keeping covered.
-    assert.equal(resolve(cleanupFixture().dir, providerMap({})).provider, undefined);
+    assert.equal(resolve(cleanupFixture().dir, providerMap({})).booking, undefined);
   });
 
   it('reports execute progress from the tasks list, and only on the execute beat', () => {
@@ -187,7 +187,7 @@ describe('resolveLeg', () => {
     );
 
     const result = withPath(`${stub}:${absent()}`, () => resolveLeg(dir));
-    assert.equal(result.beat, 'execute');
+    assert.equal(result.leg, 'execute');
     assert.equal(result.progress.changeId, CHANGE_ID);
     assert.equal(result.changeId, CHANGE_ID);
   });
@@ -198,7 +198,7 @@ describe('resolveLeg', () => {
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
 
     const result = resolve(dir);
-    assert.equal(result.beat, 'bay');
+    assert.equal(result.leg, 'bay');
     assert.deepEqual(result.completed, ['ideate', 'refine', 'contract']);
     assert.deepEqual(result.skipped, []);
   });
@@ -209,7 +209,7 @@ describe('resolveLeg', () => {
     writeFile(path.join(dir, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [ ] a\n');
 
     const result = resolve(dir);
-    assert.equal(result.beat, 'bay');
+    assert.equal(result.leg, 'bay');
     assert.deepEqual(result.completed, ['ideate', 'contract', 'specs']);
     assert.deepEqual(result.skipped, ['refine']);
   });
@@ -229,11 +229,11 @@ describe('resolveLeg', () => {
     git(repo, ['worktree', 'add', '--no-track', '-b', 'feat/thing', elsewhere]);
 
     const result = resolve(elsewhere);
-    assert.equal(result.beat, null);
+    assert.equal(result.leg, null);
     assert.equal(result.index, LEGS.length);
     assert.deepEqual(result.completed, KNOWN_STAGES);
     assert.deepEqual(result.skipped, []);
-    assert.equal(result.provider, undefined);
+    assert.equal(result.booking, undefined);
     assert.equal(result.progress, undefined);
     assert.deepEqual(result.warnings, []);
 
@@ -246,7 +246,7 @@ describe('resolveLeg', () => {
     const sub = addSubmodule(fixture.dir, createRepo({ name: 'child' }));
 
     const result = resolve(sub);
-    assert.equal(result.beat, 'specs');
+    assert.equal(result.leg, 'specs');
     assert.equal(result.branch, fixture.branch);
     assert.equal(result.warnings.length, 1);
     assert.match(result.warnings[0], /submodule/);
@@ -279,7 +279,7 @@ describe('resolveLeg', () => {
 
   it('never throws outside a git repository', () => {
     const result = resolve(tempRoot());
-    assert.equal(result.beat, 'ideate');
+    assert.equal(result.leg, 'ideate');
     assert.equal(result.branch, null);
     assert.match(result.warnings[0], /not a git repository/);
   });
@@ -289,11 +289,11 @@ describe('resolveLeg', () => {
     git(repo, ['checkout', '--detach', 'HEAD']);
     const result = resolve(repo);
     assert.equal(result.branch, null);
-    assert.equal(result.beat, 'ideate');
+    assert.equal(result.leg, 'ideate');
   });
 
   it('never throws in a repository with no commits', () => {
-    assert.equal(resolve(createRepo({ commit: false })).beat, 'ideate');
+    assert.equal(resolve(createRepo({ commit: false })).leg, 'ideate');
   });
 });
 
