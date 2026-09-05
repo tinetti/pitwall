@@ -48,7 +48,7 @@ function repoIgnoring(gitignore) {
 const check = (cwd, paths) => isolated(() => checkIgnored(cwd, paths));
 
 describe('checkIgnored', () => {
-  it('reports an artifact directory the host repository ignores', () => {
+  it('reports a paper directory the host repository ignores', () => {
     const result = check(repoIgnoring('/openspec/\n'), ['docs/ideation/', 'openspec/']);
     assert.deepEqual(result.ignored, ['openspec/']);
     assert.deepEqual(result.warnings, []);
@@ -66,7 +66,7 @@ describe('checkIgnored', () => {
     assert.deepEqual(result.warnings, []);
   });
 
-  it('reports every hit when several artifact paths are ignored', () => {
+  it('reports every hit when several paper paths are ignored', () => {
     const result = check(repoIgnoring('/openspec/\n/docs/\n'), ['docs/ideation/', 'openspec/']);
     assert.deepEqual(result.ignored.sort(), ['docs/ideation/', 'openspec/']);
   });
@@ -77,7 +77,7 @@ describe('checkIgnored', () => {
   });
 
   it('matches a directory-only pattern against a directory that does not exist yet', () => {
-    // The whole point of the inspection: the artifact is one the workflow has not written. Git only
+    // The whole point of the inspection: the paper is one the workflow has not written. Git only
     // matches `/openspec/` against a nonexistent path when the query itself carries the slash, so
     // this asserts the trailing slash survives all the way to the subprocess.
     const dir = repoIgnoring('/openspec/\n');
@@ -86,7 +86,7 @@ describe('checkIgnored', () => {
   });
 
   it('matches a glob-free directory booking, because paperPaths gives it the slash it needs', () => {
-    // A directory-only rule naming the artifact directory itself matches a path that does not exist
+    // A directory-only rule naming the paper directory itself matches a path that does not exist
     // yet only when the query says it is a directory, so a booking that happens to carry no glob
     // would otherwise slip past the very check this exists for.
     const dir = repoIgnoring('/plans/changes/\n');
@@ -124,7 +124,7 @@ describe('checkIgnored', () => {
 });
 
 describe('paperPaths', () => {
-  const shipped = () => loadBookings(BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const shipped = () => loadBookings(BOOKINGS, { knownLegs: LEGS.map((leg) => leg.id) });
 
   it('de-globs the shipped bookings down to the two wrapper-owned directories', () => {
     assert.deepEqual(paperPaths(shipped()), ['docs/ideation/', 'openspec/']);

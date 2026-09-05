@@ -93,8 +93,8 @@ describe('loadBookings', () => {
 
   it('rejects an unknown leg name when the caller supplies the known set', () => {
     const dir = bookingDir({ 'ideation-contract.md': VALID });
-    assert.throws(() => loadBookings(dir, { knownStages: ['specs', 'execute'] }), /unknown leg `contract`/);
-    assert.equal(loadBookings(dir, { knownStages: ['contract'] }).size, 1);
+    assert.throws(() => loadBookings(dir, { knownLegs: ['specs', 'execute'] }), /unknown leg `contract`/);
+    assert.equal(loadBookings(dir, { knownLegs: ['contract'] }).size, 1);
   });
 
   it('propagates frontmatter parse errors with the booking path', () => {

@@ -67,8 +67,8 @@ function state(overrides = {}) {
       body: '',
       path: '/bookings/openspec-specs.md',
     },
-    branch: 'feat/session-handover',
-    changeId: 'add-session-handover',
+    branch: 'feat/thing',
+    changeId: 'add-thing',
     warnings: [],
     ...overrides,
   };
@@ -101,7 +101,7 @@ describe('renderWaybill golden output', () => {
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
     writeFile(path.join(repo, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [x] a\n- [x] b\n');
     git(repo, ['add', '-A']);
-    git(repo, ['commit', '-m', 'every artifact']);
+    git(repo, ['commit', '-m', 'every paper']);
 
     const elsewhere = path.join(tempRoot(), 'off-convention');
     git(repo, ['worktree', 'add', '--no-track', '-b', 'feat/thing', elsewhere]);
@@ -116,7 +116,7 @@ describe('renderWaybill header and leg strip', () => {
   it('names the branch, the position, and the current leg', () => {
     assert.equal(
       renderWaybill(state(), CLEAN).split('\n')[0],
-      `feat/session-handover · leg 5 of ${LEGS.length} (specs)`,
+      `feat/thing · leg 5 of ${LEGS.length} (specs)`,
     );
   });
 
@@ -145,7 +145,7 @@ describe('renderWaybill header and leg strip', () => {
       state({ leg: null, index: 7, completed: LEGS.map((leg) => leg.id), booking: undefined }),
       CLEAN,
     );
-    assert.equal(output.split('\n')[0], `feat/session-handover · all ${LEGS.length} legs complete`);
+    assert.equal(output.split('\n')[0], `feat/thing · all ${LEGS.length} legs complete`);
     assert.equal(output.includes('▶'), false);
     assert.match(output, /NEXT:\n {2}nothing to hand off/);
   });
@@ -191,7 +191,7 @@ describe('renderWaybill NEXT block', () => {
     renderWaybill(state({ ...rest, booking: { ...state().booking, ...booking } }), CLEAN);
 
   it('interpolates the command and the change id', () => {
-    assert.match(next({}), /^ {2}\/spec:propose add-session-handover$/m);
+    assert.match(next({}), /^ {2}\/spec:propose add-thing$/m);
   });
 
   it('omits the argument when no change has been scaffolded yet', () => {
@@ -201,13 +201,13 @@ describe('renderWaybill NEXT block', () => {
   it('takes the branch instead when the booking asks for it', () => {
     // The cleanup leg's target finishes a *branch*; handing it a change id would name the wrong
     // thing entirely, and both facts are on the inference already.
-    assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/session-handover$/m);
+    assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/thing$/m);
   });
 
   it('interpolates nothing at all when the booking asks for no argument', () => {
     const output = next({ command: 'superpowers:some-skill', argument: 'none' });
     assert.match(output, /^ {2}superpowers:some-skill$/m);
-    assert.equal(output.includes('add-session-handover'), false);
+    assert.equal(output.includes('add-thing'), false);
   });
 
   it('omits a requested argument the repository cannot supply', () => {
@@ -292,7 +292,7 @@ describe('renderPosition', () => {
 });
 
 describe('renderWaybill reports what it could not do', () => {
-  it('names every gitignored artifact path', () => {
+  it('names every gitignored paper path', () => {
     const output = renderWaybill(state(), { ignored: ['openspec/', 'docs/ideation/'], warnings: [] });
     assert.match(output, /^IGNORED BY GIT:$/m);
     assert.match(output, /^ {2}⚠ openspec\/ /m);

@@ -43,7 +43,7 @@ function legIsDone(leg, state, bookings, warnings) {
  * Where this repository stands, derived from nothing but repository reality.
  *
  * The walk runs the leg list in order and stops at the first incomplete leg rather than jumping
- * to the last complete one. That is deliberate: the operator is allowed to do any stage by hand,
+ * to the last complete one. That is deliberate: the operator is allowed to do any leg by hand,
  * and skipping ahead silently would hide it. Work done out of order surfaces in `skipped` instead.
  *
  * Repository and stamp failures never throw: a directory outside any repository, a detached
@@ -59,7 +59,7 @@ function legIsDone(leg, state, bookings, warnings) {
 export function resolveLeg(cwd, bookings) {
   /** @type {string[]} */
   const warnings = [];
-  bookings ??= loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  bookings ??= loadBookings(BUILTIN_BOOKINGS, { knownLegs: LEGS.map((leg) => leg.id) });
 
   // Inside a submodule every git query answers for the submodule's own tree, so the legs would be
   // resolved against a repository the operator's change does not live in. Anchor on the

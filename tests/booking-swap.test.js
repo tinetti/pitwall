@@ -14,7 +14,7 @@ import { cleanupFixture } from './fixtures/cleanup.js';
 after(cleanupAll);
 
 const SHIPPED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
-const KNOWN_STAGES = LEGS.map((leg) => leg.id);
+const KNOWN_LEGS = LEGS.map((leg) => leg.id);
 
 /** The booking under test, swapped whole: a different command *and* a different stamp. */
 const ALTERNATE = [
@@ -50,7 +50,7 @@ function committedCopy() {
   return dir;
 }
 
-const load = (dir) => loadBookings(dir, { knownStages: KNOWN_STAGES });
+const load = (dir) => loadBookings(dir, { knownLegs: KNOWN_LEGS });
 const resolve = (dir, bookings) => withPath(pathWithout('openspec'), () => resolveLeg(dir, bookings));
 
 describe('swapping one booking', () => {

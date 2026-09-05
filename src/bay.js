@@ -240,7 +240,7 @@ export function startBay(branch, opts) {
   const base = branchExists ? null : resolveBase(cwd, opts.base);
 
   // `--no-track` for `gwt`'s reason: a new branch tracking origin/<default> makes `git pull` in the
-  // new worktree try to merge the default branch into the feature branch.
+  // new bay try to merge the default branch into the feature branch.
   const added = branchExists
     ? git(cwd, ['worktree', 'add', target, branch])
     : git(cwd, ['worktree', 'add', '--no-track', '-b', branch, target, base]);

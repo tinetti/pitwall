@@ -30,7 +30,7 @@ import { cleanupFixture } from './fixtures/cleanup.js';
 after(cleanupAll);
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
-const KNOWN_STAGES = LEGS.map((leg) => leg.id);
+const KNOWN_LEGS = LEGS.map((leg) => leg.id);
 
 /** A `PATH` with the real openspec CLI removed, so inference is judged on repository state alone. */
 const absent = () => pathWithout('openspec');
@@ -49,12 +49,12 @@ function bookingMap(files) {
   const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
   for (const [name, contents] of Object.entries(files)) writeFile(path.join(dir, name), contents);
-  return loadBookings(dir, { knownStages: KNOWN_STAGES });
+  return loadBookings(dir, { knownLegs: KNOWN_LEGS });
 }
 
 describe('LEGS', () => {
   it('is the fixed seven-leg model, in order', () => {
-    assert.deepEqual(KNOWN_STAGES, [
+    assert.deepEqual(KNOWN_LEGS, [
       'ideate',
       'bay',
       'refine',
@@ -73,14 +73,14 @@ describe('LEGS', () => {
 describe('the shipped bookings', () => {
   const bookings = loadBookings(
     path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings'),
-    { knownStages: KNOWN_STAGES },
+    { knownLegs: KNOWN_LEGS },
   );
 
   it('binds a waybill to all seven legs — the loop is closed', () => {
     // `bay` and `cleanup` are wrapper-owned for *stamping* and booking-bound for their
     // waybills: `owner` in LEGS says who supplies the stamp, not who supplies the command and
     // the prose.
-    assert.deepEqual([...bookings.keys()].sort(), [...KNOWN_STAGES].sort());
+    assert.deepEqual([...bookings.keys()].sort(), [...KNOWN_LEGS].sort());
   });
 
   it('names a model and an effort on every booking, so no leg can leave one unsourced', () => {
@@ -123,8 +123,8 @@ describe('resolveLeg', () => {
       const result = resolve(fixture.dir);
 
       assert.equal(result.leg, id);
-      assert.equal(result.index, KNOWN_STAGES.indexOf(id) + 1);
-      assert.deepEqual(result.completed, KNOWN_STAGES.slice(0, KNOWN_STAGES.indexOf(id)));
+      assert.equal(result.index, KNOWN_LEGS.indexOf(id) + 1);
+      assert.deepEqual(result.completed, KNOWN_LEGS.slice(0, KNOWN_LEGS.indexOf(id)));
       assert.deepEqual(result.skipped, []);
       assert.deepEqual(result.warnings, []);
       assert.equal(result.branch, fixture.branch);
@@ -203,7 +203,7 @@ describe('resolveLeg', () => {
     assert.deepEqual(result.skipped, []);
   });
 
-  it('names the hole a stage done by hand out of order leaves behind', () => {
+  it('names the hole a leg done by hand out of order leaves behind', () => {
     const { dir } = bayFixture();
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
     writeFile(path.join(dir, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [ ] a\n');
@@ -220,7 +220,7 @@ describe('resolveLeg', () => {
     writeFile(path.join(repo, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
     writeFile(path.join(repo, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [x] a\n- [x] b\n');
     git(repo, ['add', '-A']);
-    git(repo, ['commit', '-m', 'every artifact']);
+    git(repo, ['commit', '-m', 'every paper']);
 
     // Registered off the `gwt` path on purpose: `bayIsDone` sees a linked worktree while
     // `cleanupIsDone` sees nothing at the convention path, which is the one arrangement in which
@@ -231,7 +231,7 @@ describe('resolveLeg', () => {
     const result = resolve(elsewhere);
     assert.equal(result.leg, null);
     assert.equal(result.index, LEGS.length);
-    assert.deepEqual(result.completed, KNOWN_STAGES);
+    assert.deepEqual(result.completed, KNOWN_LEGS);
     assert.deepEqual(result.skipped, []);
     assert.equal(result.booking, undefined);
     assert.equal(result.progress, undefined);

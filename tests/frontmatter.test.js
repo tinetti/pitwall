@@ -6,10 +6,10 @@ import { parseFrontmatter } from '../src/frontmatter.js';
 describe('parseFrontmatter — accepted syntax', () => {
   it('parses flat key: value scalars and returns the body verbatim', () => {
     const { meta, body } = parseFrontmatter(
-      ['---', 'stage: contract', 'command: /ideation:ideation', 'model: opus', '---', 'Waybill text.', ''].join('\n'),
+      ['---', 'leg: contract', 'command: /ideation:ideation', 'model: opus', '---', 'Waybill text.', ''].join('\n'),
     );
     assert.deepEqual(meta, {
-      stage: 'contract',
+      leg: 'contract',
       command: '/ideation:ideation',
       model: 'opus',
     });
@@ -33,14 +33,14 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('accepts a booking with one key and an empty body', () => {
-    const { meta, body } = parseFrontmatter('---\nstage: specs\n---\n');
-    assert.deepEqual(meta, { stage: 'specs' });
+    const { meta, body } = parseFrontmatter('---\nleg: specs\n---\n');
+    assert.deepEqual(meta, { leg: 'specs' });
     assert.equal(body, '');
   });
 
   it('preserves a literal --- line inside the body', () => {
-    const { meta, body } = parseFrontmatter('---\nstage: execute\n---\nintro\n\n---\n\noutro\n');
-    assert.equal(meta.stage, 'execute');
+    const { meta, body } = parseFrontmatter('---\nleg: execute\n---\nintro\n\n---\n\noutro\n');
+    assert.equal(meta.leg, 'execute');
     assert.equal(body, 'intro\n\n---\n\noutro\n');
   });
 
@@ -52,8 +52,8 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('trims values and blank frontmatter lines', () => {
-    const { meta } = parseFrontmatter('---\n\nstage:   contract   \n\nmodel: opus\n---\n');
-    assert.deepEqual(meta, { stage: 'contract', model: 'opus' });
+    const { meta } = parseFrontmatter('---\n\nleg:   contract   \n\nmodel: opus\n---\n');
+    assert.deepEqual(meta, { leg: 'contract', model: 'opus' });
   });
 
   it('keeps an empty value as an empty string', () => {
@@ -72,8 +72,8 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('tolerates CRLF line endings', () => {
-    const { meta, body } = parseFrontmatter('---\r\nstage: specs\r\n---\r\nwaybill\r\n');
-    assert.deepEqual(meta, { stage: 'specs' });
+    const { meta, body } = parseFrontmatter('---\r\nleg: specs\r\n---\r\nwaybill\r\n');
+    assert.deepEqual(meta, { leg: 'specs' });
     assert.equal(body, 'waybill\n');
   });
 
@@ -90,15 +90,15 @@ describe('parseFrontmatter — rejected syntax', () => {
   };
 
   it('rejects an unterminated fence, naming the path and line', () => {
-    rejects('---\nstage: contract\nbody with no closing fence\n', /\/tmp\/x\.md:1:.*closing/i);
+    rejects('---\nleg: contract\nbody with no closing fence\n', /\/tmp\/x\.md:1:.*closing/i);
   });
 
   it('rejects a list item', () => {
-    rejects('---\nstage: contract\n- one\n---\n', /\/tmp\/x\.md:3:.*list/i);
+    rejects('---\nleg: contract\n- one\n---\n', /\/tmp\/x\.md:3:.*list/i);
   });
 
   it('rejects a nested indent', () => {
-    rejects('---\nstage: contract\n  nested: value\n---\n', /\/tmp\/x\.md:3:.*(indent|nest)/i);
+    rejects('---\nleg: contract\n  nested: value\n---\n', /\/tmp\/x\.md:3:.*(indent|nest)/i);
   });
 
   it('rejects a | block scalar', () => {
@@ -110,11 +110,11 @@ describe('parseFrontmatter — rejected syntax', () => {
   });
 
   it('rejects a duplicate key', () => {
-    rejects('---\nstage: contract\nstage: specs\n---\n', /\/tmp\/x\.md:3:.*duplicate/i);
+    rejects('---\nleg: contract\nleg: specs\n---\n', /\/tmp\/x\.md:3:.*duplicate/i);
   });
 
   it('rejects a line with no colon', () => {
-    rejects('---\nstage\n---\n', /\/tmp\/x\.md:2:/);
+    rejects('---\nleg\n---\n', /\/tmp\/x\.md:2:/);
   });
 
   it('rejects a key that is not a bare identifier', () => {

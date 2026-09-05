@@ -29,13 +29,13 @@ const STAMP_TIMEOUT_MS = 10000;
  * Load, validate, and index the bookings in `dir`.
  *
  * @param {string} dir directory holding `*.md` bookings
- * @param {{ knownStages?: Iterable<string> }} [options] when `knownStages` is given, a booking
+ * @param {{ knownLegs?: Iterable<string> }} [options] when `knownLegs` is given, a booking
  *   binding any other leg is rejected; the leg model that owns that list lives in a later layer.
  * @returns {Map<string, Booking>} keyed by leg
  * @throws {Error} on a malformed booking, a missing stamp, or two bookings claiming one leg
  */
 export function loadBookings(dir, options = {}) {
-  const known = options.knownStages ? new Set(options.knownStages) : null;
+  const known = options.knownLegs ? new Set(options.knownLegs) : null;
 
   /** @type {string[]} */
   let entries;

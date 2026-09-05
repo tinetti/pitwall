@@ -76,7 +76,7 @@ function next(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownLegs: LEGS.map((leg) => leg.id) });
   const state = resolveLeg(cwd, bookings);
 
   if (args.includes('--json')) {
@@ -110,7 +110,7 @@ function status(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownLegs: LEGS.map((leg) => leg.id) });
   const state = resolveLeg(cwd, bookings);
 
   io.out(renderPosition(state, checkIgnored(root, paperPaths(bookings))));
@@ -158,7 +158,7 @@ function start(cwd, args, io) {
     return 2;
   }
 
-  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const bookings = loadBookings(BUILTIN_BOOKINGS, { knownLegs: LEGS.map((leg) => leg.id) });
   const state = resolveLeg(result.path, bookings);
 
   // The one place Waybill names a shell command rather than a slash command: a tool-invoked shell

@@ -212,11 +212,11 @@ describe('the worked alternative binding in examples/', () => {
       path.join(dir, 'openspec-execute.md'),
     );
 
-    const bookings = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) });
+    const bookings = loadBookings(dir, { knownLegs: LEGS.map((leg) => leg.id) });
     const booking = bookings.get('execute');
-    assert.ok(booking, 'the swapped booking does not bind the execute stage');
+    assert.ok(booking, 'the swapped booking does not bind the execute leg');
     assert.equal(booking.command, 'superpowers:subagent-driven-development');
-    assert.equal(bookings.size, fs.readdirSync(dir).length, 'the swap left a stage unbound');
+    assert.equal(bookings.size, fs.readdirSync(dir).length, 'the swap left a leg unbound');
   });
 
   it('renders a waybill naming the skill with no argument appended', () => {
@@ -225,7 +225,7 @@ describe('the worked alternative binding in examples/', () => {
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
-    const booking = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) }).get('execute');
+    const booking = loadBookings(dir, { knownLegs: LEGS.map((leg) => leg.id) }).get('execute');
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.

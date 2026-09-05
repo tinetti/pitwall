@@ -21,7 +21,7 @@ const GOLDEN = path.join(path.dirname(fileURLToPath(import.meta.url)), 'golden')
 
 /**
  * The CLI spawns git with the developer's real environment, so a global `core.excludesFile` on this
- * machine would otherwise decide whether a fixture repository reports ignored artifacts.
+ * machine would otherwise decide whether a fixture repository reports ignored papers.
  *
  * @template T
  * @param {() => T} fn
@@ -92,7 +92,7 @@ describe('waybill next', () => {
     assert.match(result.out, /leg 5 of 7 \(specs\)/);
   });
 
-  it('reports ignored artifacts from a subdirectory — the inspection runs at the repository root', () => {
+  it('reports ignored papers from a subdirectory — the inspection runs at the repository root', () => {
     // The load-bearing case: `git check-ignore` resolves its arguments against the process
     // directory, so running it in `src/nested` would match nothing and the block would vanish
     // exactly when the operator most needs it. Running from the root is what makes it appear.
@@ -107,7 +107,7 @@ describe('waybill next', () => {
     assert.match(result.out, /openspec\/ — papers written here will never be committed/);
   });
 
-  it('stays silent about git-ignored artifacts when the repository ignores none', () => {
+  it('stays silent about git-ignored papers when the repository ignores none', () => {
     const result = cli(['next'], specsFixture().dir);
     assert.equal(result.out.includes('IGNORED BY GIT'), false);
   });
@@ -165,7 +165,7 @@ describe('waybill status', () => {
     assert.match(cli(['next'], specsFixture().dir).out, /\/spec:propose/);
   });
 
-  it('reports ignored artifacts, which belong to the position rather than to the waybill', () => {
+  it('reports ignored papers, which belong to the position rather than to the waybill', () => {
     const fixture = specsFixture();
     writeFile(path.join(fixture.dir, '.gitignore'), '/openspec/\n');
 
