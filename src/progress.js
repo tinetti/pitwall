@@ -99,7 +99,7 @@ function changeIds(repoRoot) {
  * back to the last name when every change is finished. `openspec list --json` is picked from by the
  * same rule, so the two sources agree whenever they see the same changes — but they need not see the
  * same ones: this walk requires a `tasks.md` and the CLI does not, so the CLI can name a change this
- * function returns `null` for. `resolveBeat` resolves that one-sided case in the CLI's favour.
+ * function returns `null` for. `resolveLeg` resolves that one-sided case in the CLI's favour.
  *
  * @param {string} repoRoot
  * @returns {string|null}
@@ -115,10 +115,10 @@ export function discoverChangeId(repoRoot) {
 }
 
 /**
- * `n of N` for the execute beat, from the CLI when it answers and from the tasks list when it does
- * not. Both paths return the same shape so the baton renderer never branches on which one ran.
+ * `n of N` for the execute leg, from the CLI when it answers and from the tasks list when it does
+ * not. Both paths return the same shape so the waybill renderer never branches on which one ran.
  *
- * `total: 0` is reported literally. A change with no tasks is a specs-beat problem, and calling
+ * `total: 0` is reported literally. A change with no tasks is a specs-leg problem, and calling
  * `0 of 0` complete would hide it.
  *
  * @param {string} repoRoot

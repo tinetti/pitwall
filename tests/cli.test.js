@@ -21,7 +21,7 @@ const GOLDEN = path.join(path.dirname(fileURLToPath(import.meta.url)), 'golden')
 
 /**
  * The CLI spawns git with the developer's real environment, so a global `core.excludesFile` on this
- * machine would otherwise decide whether a fixture repository reports ignored artifacts.
+ * machine would otherwise decide whether a fixture repository reports ignored papers.
  *
  * @template T
  * @param {() => T} fn
@@ -42,10 +42,10 @@ function isolated(fn) {
 }
 
 /**
- * Drive `run` exactly the way phase 5's `bin/pw` will — argv after the program name, both streams
+ * Drive `run` exactly the way phase 5's `bin/waybill` will — argv after the program name, both streams
  * injected — so this suite covers the same entry point the wrapper will call rather than a subshell.
  *
- * The real `openspec` binary is removed from `PATH` for the same reason `tests/baton.test.js`
+ * The real `openspec` binary is removed from `PATH` for the same reason `tests/waybill.test.js`
  * removes it: the golden comparison is byte-exact, and a CLI installed on the developer's machine
  * must not be able to change what is rendered.
  *
@@ -72,8 +72,8 @@ function cli(argv, cwd) {
   return { code, out, err };
 }
 
-describe('pw next', () => {
-  it('prints the baton for the beat the repository is actually on, and exits 0', () => {
+describe('waybill next', () => {
+  it('prints the waybill for the leg the repository is actually on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['next'], fixture.dir);
 
@@ -82,17 +82,17 @@ describe('pw next', () => {
     assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'specs.txt'), 'utf8'));
   });
 
-  it('exits 0 even from a subdirectory of the worktree', () => {
+  it('exits 0 even from a subdirectory of the bay', () => {
     const fixture = specsFixture();
     const sub = path.join(fixture.dir, 'src', 'nested');
     fs.mkdirSync(sub, { recursive: true });
 
     const result = cli(['next'], sub);
     assert.equal(result.code, 0);
-    assert.match(result.out, /beat 5 of 7 \(specs\)/);
+    assert.match(result.out, /leg 5 of 7 \(specs\)/);
   });
 
-  it('reports ignored artifacts from a subdirectory — the preflight runs at the repository root', () => {
+  it('reports ignored papers from a subdirectory — the inspection runs at the repository root', () => {
     // The load-bearing case: `git check-ignore` resolves its arguments against the process
     // directory, so running it in `src/nested` would match nothing and the block would vanish
     // exactly when the operator most needs it. Running from the root is what makes it appear.
@@ -102,12 +102,12 @@ describe('pw next', () => {
     fs.mkdirSync(sub, { recursive: true });
 
     const result = cli(['next'], sub);
-    assert.equal(result.code, 0, 'the preflight is advice; it never changes the exit code');
+    assert.equal(result.code, 0, 'the inspection is advice; it never changes the exit code');
     assert.match(result.out, /^IGNORED BY GIT:$/m);
-    assert.match(result.out, /openspec\/ — artifacts written here will never be committed/);
+    assert.match(result.out, /openspec\/ — papers written here will never be committed/);
   });
 
-  it('stays silent about git-ignored artifacts when the repository ignores none', () => {
+  it('stays silent about git-ignored papers when the repository ignores none', () => {
     const result = cli(['next'], specsFixture().dir);
     assert.equal(result.out.includes('IGNORED BY GIT'), false);
   });
@@ -119,11 +119,11 @@ describe('pw next', () => {
     assert.equal(result.code, 0);
     assert.equal(result.err, '');
     const state = JSON.parse(result.out);
-    assert.equal(state.beat, 'specs');
+    assert.equal(state.leg, 'specs');
     assert.equal(state.index, 5);
     assert.equal(state.branch, fixture.branch);
-    assert.deepEqual(state.completed, ['ideate', 'worktree', 'refine', 'contract']);
-    assert.equal(state.provider.command, '/spec:propose');
+    assert.deepEqual(state.completed, ['ideate', 'bay', 'refine', 'contract']);
+    assert.equal(state.booking.command, '/spec:propose');
   });
 
   it('explains itself in one line outside a repository and exits 2, with no stack trace', () => {
@@ -136,18 +136,18 @@ describe('pw next', () => {
     assert.equal(/\bat .*\.js:\d+/.test(result.err), false, 'a stack trace leaked into stderr');
   });
 
-  it('rejects an unknown option rather than printing the human baton to a --json consumer', () => {
+  it('rejects an unknown option rather than printing the human waybill to a --json consumer', () => {
     const result = cli(['next', '--jsonn'], specsFixture().dir);
 
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown option `--jsonn`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });
 
-describe('pw status', () => {
-  it('prints the position for the beat the repository is on, and exits 0', () => {
+describe('waybill status', () => {
+  it('prints the position for the leg the repository is on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['status'], fixture.dir);
 
@@ -156,7 +156,7 @@ describe('pw status', () => {
     assert.equal(result.out, fs.readFileSync(path.join(GOLDEN, 'status.txt'), 'utf8'));
   });
 
-  it('hands off nothing — the baton is `next`\'s answer, not this one\'s', () => {
+  it('hands off nothing — the waybill is `next`\'s answer, not this one\'s', () => {
     const result = cli(['status'], specsFixture().dir);
 
     assert.equal(result.out.includes('NEXT:'), false);
@@ -165,7 +165,7 @@ describe('pw status', () => {
     assert.match(cli(['next'], specsFixture().dir).out, /\/spec:propose/);
   });
 
-  it('reports ignored artifacts, which belong to the position rather than to the baton', () => {
+  it('reports ignored papers, which belong to the position rather than to the waybill', () => {
     const fixture = specsFixture();
     writeFile(path.join(fixture.dir, '.gitignore'), '/openspec/\n');
 
@@ -189,12 +189,12 @@ describe('pw status', () => {
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown option `--json`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });
 
-describe('pw start', () => {
-  it('creates the worktree, names the cd target, and hands off the beat that follows', () => {
+describe('waybill start', () => {
+  it('creates the bay, names the cd target, and hands off the leg that follows', () => {
     const repo = createRepo({ remote: true, originHead: true });
 
     const result = cli(['start', 'feat/demo'], repo);
@@ -204,13 +204,13 @@ describe('pw start', () => {
     assert.equal(result.err, '');
     assert.equal(fs.existsSync(target), true);
     assert.match(result.out, new RegExp(`^ {2}cd ${target}$`, 'm'));
-    // The baton must be resolved from the *new* tree: from the operator's cwd the worktree beat
-    // still reads as outstanding, and the command would hand back the beat it has just done.
-    assert.match(result.out, /^feat\/demo · beat 3 of 7 \(refine\)$/m);
-    assert.match(result.out, /✓ worktree/);
+    // The waybill must be resolved from the *new* tree: from the operator's cwd the bay leg
+    // still reads as outstanding, and the command would hand back the leg it has just done.
+    assert.match(result.out, /^feat\/demo · leg 3 of 7 \(refine\)$/m);
+    assert.match(result.out, /✓ bay/);
   });
 
-  it('is a clean no-op on a second run, and still prints the baton', () => {
+  it('is a clean no-op on a second run, and still prints the waybill', () => {
     const repo = createRepo({ remote: true, originHead: true });
     cli(['start', 'feat/demo'], repo);
 
@@ -223,7 +223,7 @@ describe('pw start', () => {
     assert.match(result.out, /\(refine\)/);
   });
 
-  it('reports a no-op without a cd line when run from inside the worktree it would create', () => {
+  it('reports a no-op without a cd line when run from inside the bay it would create', () => {
     const repo = createRepo({ remote: true, originHead: true });
     cli(['start', 'feat/demo'], repo);
     const target = path.join(path.dirname(repo), `${path.basename(repo)}-feat-demo`);
@@ -241,7 +241,7 @@ describe('pw start', () => {
 
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 
   it('rejects an option and a second positional rather than guessing which is the branch', () => {
@@ -265,7 +265,7 @@ describe('pw start', () => {
     assert.match(result.err, /not inside a git repository/);
   });
 
-  it('turns a git refusal into a remedy on stderr, with no stack trace and no half-baton', () => {
+  it('turns a git refusal into a remedy on stderr, with no stack trace and no half-waybill', () => {
     const result = cli(['start', 'feat/demo'], createRepo({ commit: false }));
 
     assert.equal(result.code, 2);
@@ -276,20 +276,20 @@ describe('pw start', () => {
   });
 });
 
-describe('pw argument parsing', () => {
+describe('waybill argument parsing', () => {
   it('answers --help after the subcommand, not only before it', () => {
     const result = cli(['next', '--help'], specsFixture().dir);
 
     assert.equal(result.code, 0);
     assert.equal(result.err, '');
-    assert.match(result.out, /Usage: pw <command> \[options\]/);
-    assert.equal(result.out.includes('NEXT:'), false, 'a baton was rendered instead of usage');
+    assert.match(result.out, /Usage: waybill <command> \[options\]/);
+    assert.equal(result.out.includes('NEXT:'), false, 'a waybill was rendered instead of usage');
   });
 
   it('answers --help before the subcommand too', () => {
     const result = cli(['--help'], tempRoot());
     assert.equal(result.code, 0);
-    assert.match(result.out, /Usage: pw <command> \[options\]/);
+    assert.match(result.out, /Usage: waybill <command> \[options\]/);
   });
 
   it('exits 2 on an unknown command', () => {
@@ -298,7 +298,7 @@ describe('pw argument parsing', () => {
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown command `bogus`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 
   it('exits 2 with usage on stderr when given no command at all', () => {
@@ -306,6 +306,6 @@ describe('pw argument parsing', () => {
 
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });

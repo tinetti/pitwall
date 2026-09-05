@@ -9,11 +9,11 @@ export const CHANGE_ID = 'add-thing';
 const TASKS = ['# Tasks', '', '- [x] 1.1 Scaffold', '- [ ] 1.2 Implement', '  - [ ] 1.3 Test', ''].join('\n');
 
 /**
- * A repository frozen at the `execute` beat: a change is scaffolded and partly worked — one of its
+ * A repository frozen at the `execute` leg: a change is scaffolded and partly worked — one of its
  * three tasks is ticked, so progress reports `1 of 3`.
  *
  * @param {string} [branch]
- * @returns {import('./ideate.js').BeatFixture}
+ * @returns {import('./ideate.js').LegFixture}
  */
 export function executeFixture(branch = 'feat/thing') {
   const fixture = specsFixture(branch);

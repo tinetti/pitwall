@@ -5,20 +5,20 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
-import { renderBaton } from '../src/baton.js';
-import { parseManifest } from '../src/frontmatter.js';
-import { loadProviders } from '../src/providers.js';
+import { LEGS } from '../src/legs.js';
+import { renderWaybill } from '../src/waybill.js';
+import { parseFrontmatter } from '../src/frontmatter.js';
+import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, tempRoot, writeFile } from './helpers/repo-fixture.js';
 
 after(cleanupAll);
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COMMANDS = path.join(ROOT, 'commands');
-const PROVIDERS = path.join(ROOT, 'providers');
+const BOOKINGS = path.join(ROOT, 'bookings');
 
 /**
- * The command set Pitwall claims to ship.
+ * The command set Waybill claims to ship.
  *
  * It lives here rather than in a `commands` key in `.claude-plugin/plugin.json` deliberately, and
  * the reason was measured against a scratch install rather than assumed: with no key, `commands/`
@@ -76,7 +76,7 @@ function problems(dir, files) {
     const file = path.join(dir, ...rel.split('/'));
     let meta;
     try {
-      ({ meta } = parseManifest(fs.readFileSync(file, 'utf8'), rel));
+      ({ meta } = parseFrontmatter(fs.readFileSync(file, 'utf8'), rel));
     } catch (error) {
       // Already `<file>:<line>: <message>` — the parser names its own source.
       found.push(error.message);
@@ -132,7 +132,7 @@ describe('the shipped command set', () => {
 
   it('rejects a command file that lost its frontmatter fences entirely', () => {
     const dir = scratch();
-    writeFile(path.join(dir, 'status.md'), '# Pitwall: status\n\nno frontmatter here\n');
+    writeFile(path.join(dir, 'status.md'), '# Waybill: status\n\nno frontmatter here\n');
 
     assert.deepEqual(problems(dir, DECLARED), ['status.md: frontmatter names no description']);
   });
@@ -158,7 +158,7 @@ describe('the shipped command set', () => {
     };
     for (const [rel, expected] of Object.entries(routing)) {
       const source = fs.readFileSync(path.join(COMMANDS, ...rel.split('/')), 'utf8');
-      const { meta } = parseManifest(source, rel);
+      const { meta } = parseFrontmatter(source, rel);
       assert.equal(meta.model, expected.model, rel);
       assert.equal(meta.effort, expected.effort, rel);
       assert.match(source, /\$ARGUMENTS/, `${rel} lost its argument line`);
@@ -169,7 +169,7 @@ describe('the shipped command set', () => {
 describe('the plugin manifest', () => {
   it('is valid JSON naming the plugin', () => {
     const plugin = readJson('.claude-plugin/plugin.json');
-    assert.equal(plugin.name, 'pitwall');
+    assert.equal(plugin.name, 'waybill');
     assert.ok(plugin.description, 'plugin.json has no description');
     assert.ok(Array.isArray(plugin.keywords) && plugin.keywords.length > 0);
   });
@@ -187,61 +187,61 @@ describe('the plugin manifest', () => {
 });
 
 /**
- * The shipped manifests, copied to a throwaway directory so a swap can be applied to them without
+ * The shipped bookings, copied to a throwaway directory so a swap can be applied to them without
  * touching the developer's checkout.
  *
- * @returns {string} the copied `providers/` directory
+ * @returns {string} the copied `bookings/` directory
  */
-function scratchProviders() {
-  const dir = path.join(tempRoot(), 'providers');
+function scratchBookings() {
+  const dir = path.join(tempRoot(), 'bookings');
   fs.mkdirSync(dir, { recursive: true });
-  for (const entry of fs.readdirSync(PROVIDERS).filter((name) => name.endsWith('.md'))) {
-    fs.copyFileSync(path.join(PROVIDERS, entry), path.join(dir, entry));
+  for (const entry of fs.readdirSync(BOOKINGS).filter((name) => name.endsWith('.md'))) {
+    fs.copyFileSync(path.join(BOOKINGS, entry), path.join(dir, entry));
   }
   return dir;
 }
 
 describe('the worked alternative binding in examples/', () => {
-  // Nothing under `examples/` is on any load path — `loadProviders` only ever reads `providers/` —
-  // so a typo in `stage`, `argument`, or the detector would surface for the first time on the
-  // operator who followed the README and overwrote their working manifest with it.
-  it('loads as a drop-in replacement for the execute manifest', () => {
-    const dir = scratchProviders();
+  // Nothing under `examples/` is on any load path — `loadBookings` only ever reads `bookings/` —
+  // so a typo in `leg`, `argument`, or the stamp would surface for the first time on the
+  // operator who followed the README and overwrote their working booking with it.
+  it('loads as a drop-in replacement for the execute booking', () => {
+    const dir = scratchBookings();
     fs.copyFileSync(
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
 
-    const providers = loadProviders(dir, { knownStages: BEATS.map((beat) => beat.id) });
-    const provider = providers.get('execute');
-    assert.ok(provider, 'the swapped manifest does not bind the execute stage');
-    assert.equal(provider.command, 'superpowers:subagent-driven-development');
-    assert.equal(providers.size, fs.readdirSync(dir).length, 'the swap left a stage unbound');
+    const bookings = loadBookings(dir, { knownLegs: LEGS.map((leg) => leg.id) });
+    const booking = bookings.get('execute');
+    assert.ok(booking, 'the swapped booking does not bind the execute leg');
+    assert.equal(booking.command, 'superpowers:subagent-driven-development');
+    assert.equal(bookings.size, fs.readdirSync(dir).length, 'the swap left a leg unbound');
   });
 
-  it('renders a baton naming the skill with no argument appended', () => {
-    const dir = scratchProviders();
+  it('renders a waybill naming the skill with no argument appended', () => {
+    const dir = scratchBookings();
     fs.copyFileSync(
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
-    const provider = loadProviders(dir, { knownStages: BEATS.map((beat) => beat.id) }).get('execute');
+    const booking = loadBookings(dir, { knownLegs: LEGS.map((leg) => leg.id) }).get('execute');
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.
-    const baton = renderBaton({
-      beat: 'execute',
+    const waybill = renderWaybill({
+      leg: 'execute',
       index: 6,
-      completed: ['ideate', 'worktree', 'refine', 'contract', 'specs'],
+      completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
       skipped: [],
-      provider,
+      booking,
       branch: 'feat/thing',
       changeId: 'add-thing',
       warnings: [],
     });
 
-    assert.match(baton, /^ {2}superpowers:subagent-driven-development$/m);
-    assert.equal(baton.includes('subagent-driven-development add-thing'), false);
+    assert.match(waybill, /^ {2}superpowers:subagent-driven-development$/m);
+    assert.equal(waybill.includes('subagent-driven-development add-thing'), false);
   });
 });
 
@@ -257,27 +257,28 @@ describe('criterion 7: zero dependencies and no build step', () => {
     assert.equal((pkg.scripts ?? {}).build, undefined);
   });
 
-  it('points `pw` at an executable shim that exists', () => {
-    assert.equal(pkg.bin.pw, 'bin/pw');
-    const shim = path.join(ROOT, pkg.bin.pw);
+  it('points both bin names at one executable shim that exists', () => {
+    assert.equal(pkg.bin.waybill, 'bin/waybill');
+    assert.equal(pkg.bin.wyb, 'bin/waybill');
+    const shim = path.join(ROOT, pkg.bin.waybill);
     assert.equal(fs.existsSync(shim), true);
-    assert.notEqual(fs.statSync(shim).mode & 0o111, 0, 'bin/pw is not executable');
+    assert.notEqual(fs.statSync(shim).mode & 0o111, 0, 'bin/waybill is not executable');
   });
 
   it('keeps argument parsing out of the shim, so it cannot drift from the CLI', () => {
-    const shim = fs.readFileSync(path.join(ROOT, 'bin', 'pw'), 'utf8');
+    const shim = fs.readFileSync(path.join(ROOT, 'bin', 'waybill'), 'utf8');
     assert.match(shim, /^#!\/usr\/bin\/env node$/m);
     assert.match(shim, /run\(process\.argv\.slice\(2\)\)/);
   });
 
-  it('actually runs: `pw --help` exits 0 and prints the usage banner', () => {
+  it('actually runs: `waybill --help` exits 0 and prints the usage banner', () => {
     // Reading the shim's text cannot catch a broken import path or a throw on load — the file
     // would still contain both lines above and still be dead on arrival for anyone who ran it.
-    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pw'), '--help'], {
+    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'waybill'), '--help'], {
       encoding: 'utf8',
     });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^Usage: pw <command> \[options\]$/m);
-    assert.match(result.stdout, /^ {2}status +Where this change stands, without the baton$/m);
+    assert.match(result.stdout, /^Usage: waybill <command> \[options\]$/m);
+    assert.match(result.stdout, /^ {2}status +Where this docket stands, without the waybill$/m);
   });
 });

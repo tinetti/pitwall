@@ -1,11 +1,12 @@
 {
-  "name": "pitwall",
+  "name": "waybill",
   "version": "0.1.0",
-  "description": "A thin workflow wrapper that infers where a change stands and hands the next session its baton.",
+  "description": "A thin workflow wrapper that infers where a change stands and hands the next session its waybill.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "pw": "bin/pw"
+    "waybill": "bin/waybill",
+    "wyb": "bin/waybill"
   },
   "engines": {
     "node": ">=22.0.0"

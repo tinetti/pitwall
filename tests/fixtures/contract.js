@@ -4,11 +4,11 @@ import { writeFile } from '../helpers/repo-fixture.js';
 import { refineFixture } from './refine.js';
 
 /**
- * A repository frozen at the `contract` beat: the interview left its data behind, but the contract
+ * A repository frozen at the `contract` leg: the interview left its data behind, but the contract
  * itself has not been written.
  *
  * @param {string} [branch]
- * @returns {import('./ideate.js').BeatFixture}
+ * @returns {import('./ideate.js').LegFixture}
  */
 export function contractFixture(branch = 'feat/thing') {
   const fixture = refineFixture(branch);

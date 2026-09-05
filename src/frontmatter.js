@@ -3,7 +3,7 @@
  *
  * Accepts exactly flat `key: value` scalar lines between `---` fences and throws on anything
  * else — lists, nested indents, block scalars, duplicate keys. Throwing is the feature: it keeps
- * a general YAML dialect from accreting one manifest at a time.
+ * a general YAML dialect from accreting one frontmatter block at a time.
  */
 
 const FENCE = '---';
@@ -34,15 +34,15 @@ function stripWrappingQuotes(value) {
 }
 
 /**
- * Split a manifest into its frontmatter map and its verbatim body.
+ * Split a booking into its frontmatter map and its verbatim body.
  *
  * @param {string} source
  * @param {string} [path] source label used in error messages
  * @returns {{ meta: Record<string,string>, body: string }}
  * @throws {Error} on list, nested, or block scalar syntax, a duplicate key, or a missing fence
  */
-export function parseManifest(source, path) {
-  const label = path ?? '<manifest>';
+export function parseFrontmatter(source, path) {
+  const label = path ?? '<frontmatter>';
   const text = source.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const lines = text.split('\n');
 
