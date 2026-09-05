@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
+import { LEGS } from '../src/legs.js';
 import { renderBaton, renderPosition } from '../src/baton.js';
-import { resolveBeat } from '../src/inference.js';
+import { resolveLeg } from '../src/inference.js';
 import { cleanupAll, createRepo, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
 import { ideateFixture } from './fixtures/ideate.js';
 import { worktreeFixture } from './fixtures/worktree.js';
@@ -23,7 +23,7 @@ const GOLDEN = path.join(HERE, 'golden');
 const SRC = path.join(HERE, '..', 'src');
 
 /** The golden files are byte-exact, so the real openspec CLI must never influence what is rendered. */
-const resolve = (dir) => withPath(pathWithout('openspec'), () => resolveBeat(dir));
+const resolve = (dir) => withPath(pathWithout('openspec'), () => resolveLeg(dir));
 
 /** Nothing ignored, nothing to report — the shape every golden case is rendered against. */
 const CLEAN = { ignored: [], warnings: [] };
@@ -56,7 +56,7 @@ function state(overrides = {}) {
   return {
     beat: 'specs',
     index: 5,
-    completed: ['ideate', 'worktree', 'refine', 'contract'],
+    completed: ['ideate', 'bay', 'refine', 'contract'],
     skipped: [],
     provider: {
       leg: 'specs',
@@ -116,23 +116,23 @@ describe('renderBaton header and beat strip', () => {
   it('names the branch, the position, and the current beat', () => {
     assert.equal(
       renderBaton(state(), CLEAN).split('\n')[0],
-      `feat/session-handoff · beat 5 of ${BEATS.length} (specs)`,
+      `feat/session-handoff · beat 5 of ${LEGS.length} (specs)`,
     );
   });
 
   it('drops the branch prefix entirely on a detached HEAD rather than printing null', () => {
     const first = renderBaton(state({ branch: null }), CLEAN).split('\n')[0];
-    assert.equal(first, `beat 5 of ${BEATS.length} (specs)`);
+    assert.equal(first, `beat 5 of ${LEGS.length} (specs)`);
     assert.equal(first.includes('null'), false);
   });
 
   it('walks the beat list positionally, so completed beats after the current one keep their place', () => {
     const output = renderBaton(
-      state({ beat: 'worktree', index: 2, completed: ['ideate', 'refine', 'contract'], provider: undefined }),
+      state({ beat: 'bay', index: 2, completed: ['ideate', 'refine', 'contract'], provider: undefined }),
       CLEAN,
     );
     assert.equal(output.split('\n')[1], '  ✓ ideate  ✓ refine  ✓ contract');
-    assert.equal(output.split('\n')[2], '  ▶ worktree');
+    assert.equal(output.split('\n')[2], '  ▶ bay');
   });
 
   it('names a skipped beat rather than hiding it', () => {
@@ -142,10 +142,10 @@ describe('renderBaton header and beat strip', () => {
 
   it('says every beat is complete when the walk fell off the end', () => {
     const output = renderBaton(
-      state({ beat: null, index: 7, completed: BEATS.map((beat) => beat.id), provider: undefined }),
+      state({ beat: null, index: 7, completed: LEGS.map((leg) => leg.id), provider: undefined }),
       CLEAN,
     );
-    assert.equal(output.split('\n')[0], `feat/session-handoff · all ${BEATS.length} beats complete`);
+    assert.equal(output.split('\n')[0], `feat/session-handoff · all ${LEGS.length} beats complete`);
     assert.equal(output.includes('▶'), false);
     assert.match(output, /NEXT:\n {2}nothing to hand off/);
   });
@@ -157,7 +157,7 @@ describe('renderBaton progress', () => {
       state({
         beat: 'execute',
         index: 6,
-        completed: ['ideate', 'worktree', 'refine', 'contract', 'specs'],
+        completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
         progress: { done, total, source: 'tasks-md', changeId: CHANGE_ID },
       }),
       CLEAN,
@@ -250,8 +250,8 @@ describe('renderBaton NEXT block', () => {
   });
 
   it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
-    const output = renderBaton(state({ beat: 'worktree', index: 2, provider: undefined }), CLEAN);
-    assert.match(output, /NEXT:\n {2}no provider manifest is bound to the worktree beat/);
+    const output = renderBaton(state({ beat: 'bay', index: 2, provider: undefined }), CLEAN);
+    assert.match(output, /NEXT:\n {2}no provider manifest is bound to the bay beat/);
     assert.match(output, /bookings\//);
   });
 });

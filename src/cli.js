@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from './beats.js';
+import { LEGS } from './legs.js';
 import { renderBaton, renderPosition } from './baton.js';
-import { BUILTIN_BOOKINGS, resolveBeat } from './inference.js';
+import { BUILTIN_BOOKINGS, resolveLeg } from './inference.js';
 import { artifactPaths, checkIgnored } from './preflight.js';
 import { loadBookings } from './bookings.js';
 import { superprojectRoot, worktreeRoot } from './repo.js';
@@ -14,7 +14,7 @@ const USAGE = [
   '',
   'Commands:',
   '  next            Where this change stands, and the baton for the next session',
-  '  start <branch>  Create the branch and its worktree, then hand off the next beat',
+  '  start <branch>  Create the branch and its worktree, then hand off the next leg',
   '  status          Where this change stands, without the baton',
   '',
   'Options:',
@@ -35,8 +35,8 @@ const INDENT = '  ';
  * The repository every subcommand answers for, or `null` once the operator has been told there is
  * none.
  *
- * `resolveBeat` deliberately never throws outside a repository — it returns a plausible-looking
- * `ideate` beat plus a warning — so the no-git case has to be caught before it, not around it. The
+ * `resolveLeg` deliberately never throws outside a repository — it returns a plausible-looking
+ * `ideate` leg plus a warning — so the no-git case has to be caught before it, not around it. The
  * submodule redirect is applied first so the preflight, the inference, and any worktree created
  * here all answer for one repository.
  *
@@ -54,9 +54,9 @@ function repoRoot(cwd, io) {
 }
 
 /**
- * `pw next` — resolve the beat, check the artifact paths, print one baton.
+ * `pw next` — resolve the leg, check the artifact paths, print one baton.
  *
- * Exit 0 whenever a beat resolved, preflight findings included: the preflight is advice and the
+ * Exit 0 whenever a leg resolved, preflight findings included: the preflight is advice and the
  * baton is the product. Exit 2 is reserved for "there is nothing here to answer about".
  *
  * @param {string} cwd
@@ -74,8 +74,8 @@ function next(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
-  const state = resolveBeat(cwd, providers);
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(cwd, providers);
 
   if (args.includes('--json')) {
     io.out(`${JSON.stringify(state, null, 2)}\n`);
@@ -108,20 +108,20 @@ function status(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
-  const state = resolveBeat(cwd, providers);
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(cwd, providers);
 
   io.out(renderPosition(state, checkIgnored(root, artifactPaths(providers))));
   return 0;
 }
 
 /**
- * `pw start <branch>` — cut the branch and its worktree, then hand off the beat that follows.
+ * `pw start <branch>` — cut the branch and its worktree, then hand off the leg that follows.
  *
  * Leaving the operator at a bare success message would recreate the exact gap Pitwall exists to
  * close, so the baton is printed here too. It is resolved from the *new* worktree rather than from
- * `cwd`: the worktree beat is detected from the branch that is checked out, so asked from the
- * operator's tree the answer would still be "create a worktree" — the beat just done.
+ * `cwd`: the bay leg is detected from the branch that is checked out, so asked from the
+ * operator's tree the answer would still be "create a worktree" — the leg just done.
  *
  * @param {string} cwd
  * @param {string[]} args
@@ -156,8 +156,8 @@ function start(cwd, args, io) {
     return 2;
   }
 
-  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
-  const state = resolveBeat(result.path, providers);
+  const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
+  const state = resolveLeg(result.path, providers);
 
   // The one place Pitwall names a shell command rather than a slash command: a tool-invoked shell
   // cannot change the operator's directory, so the move has to be theirs to make.

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
+import { LEGS } from '../src/legs.js';
 import { artifactPaths, checkIgnored } from '../src/preflight.js';
 import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, createRepo, tempRoot, writeFile } from './helpers/repo-fixture.js';
@@ -124,7 +124,7 @@ describe('checkIgnored', () => {
 });
 
 describe('artifactPaths', () => {
-  const shipped = () => loadBookings(PROVIDERS, { knownStages: BEATS.map((beat) => beat.id) });
+  const shipped = () => loadBookings(PROVIDERS, { knownStages: LEGS.map((leg) => leg.id) });
 
   it('de-globs the shipped manifests down to the two wrapper-owned directories', () => {
     assert.deepEqual(artifactPaths(shipped()), ['docs/ideation/', 'openspec/']);

@@ -1,14 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS, cleanupIsDone, ideateIsDone, worktreeIsDone } from './beats.js';
+import { LEGS, cleanupIsDone, ideateIsDone, bayIsDone } from './legs.js';
 import { evaluateBooking, loadBookings } from './bookings.js';
 import { currentBranch, defaultBranch, superprojectRoot, worktreeRoot } from './repo.js';
 import { discoverChangeId, executeProgress } from './progress.js';
 
 /**
  * The bookings Pitwall ships with, used when a caller supplies none. Exported so the CLI can load
- * the same map it hands to {@link resolveBeat} and derive the preflight's artifact paths from it,
+ * the same map it hands to {@link resolveLeg} and derive the preflight's artifact paths from it,
  * rather than keeping a second copy of this path.
  */
 export const BUILTIN_BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
@@ -21,17 +21,17 @@ export const BUILTIN_BOOKINGS = path.join(path.dirname(fileURLToPath(import.meta
  */
 
 /**
- * @param {import('./beats.js').Beat} beat
- * @param {import('./beats.js').RepoState} state
+ * @param {import('./legs.js').Leg} leg
+ * @param {import('./legs.js').RepoState} state
  * @param {Map<string, import('./bookings.js').Booking>} providers
  * @param {string[]} warnings collected in place
  * @returns {boolean}
  */
-function beatIsDone(beat, state, providers, warnings) {
-  if (beat.id === 'worktree') return worktreeIsDone(state);
-  if (beat.id === 'cleanup') return cleanupIsDone(state);
+function legIsDone(leg, state, providers, warnings) {
+  if (leg.id === 'bay') return bayIsDone(state);
+  if (leg.id === 'cleanup') return cleanupIsDone(state);
 
-  const provider = providers.get(beat.id);
+  const provider = providers.get(leg.id);
   if (!provider) return false;
 
   const result = evaluateBooking(provider, state.root);
@@ -42,7 +42,7 @@ function beatIsDone(beat, state, providers, warnings) {
 /**
  * Where this repository stands, derived from nothing but repository reality.
  *
- * The walk runs the beat list in order and stops at the first incomplete beat rather than jumping
+ * The walk runs the leg list in order and stops at the first incomplete leg rather than jumping
  * to the last complete one. That is deliberate: the operator is allowed to do any stage by hand,
  * and skipping ahead silently would hide it. Work done out of order surfaces in `skipped` instead.
  *
@@ -56,12 +56,12 @@ function beatIsDone(beat, state, providers, warnings) {
  * @param {Map<string, import('./bookings.js').Booking>} [providers] defaults to the built-ins
  * @returns {Inference}
  */
-export function resolveBeat(cwd, providers) {
+export function resolveLeg(cwd, providers) {
   /** @type {string[]} */
   const warnings = [];
-  const manifests = providers ?? loadBookings(BUILTIN_BOOKINGS, { knownStages: BEATS.map((beat) => beat.id) });
+  const manifests = providers ?? loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
 
-  // Inside a submodule every git query answers for the submodule's own tree, so the beats would be
+  // Inside a submodule every git query answers for the submodule's own tree, so the legs would be
   // resolved against a repository the operator's change does not live in. Anchor on the
   // superproject instead, and say so — a silently redirected answer is its own failure mode.
   const superproject = superprojectRoot(cwd);
@@ -74,36 +74,36 @@ export function resolveBeat(cwd, providers) {
   if (root === null) {
     warnings.push(`not a git repository: ${cwd}`);
     return {
-      beat: BEATS[0].id,
+      beat: LEGS[0].id,
       index: 1,
       completed: [],
       skipped: [],
-      provider: manifests.get(BEATS[0].id),
+      provider: manifests.get(LEGS[0].id),
       branch: null,
       changeId: null,
       warnings,
     };
   }
 
-  /** @type {import('./beats.js').RepoState} */
+  /** @type {import('./legs.js').RepoState} */
   const state = { cwd: anchor, root, branch: currentBranch(anchor), base: defaultBranch(anchor) };
 
-  // Every beat but `ideate` is judged on its own; `ideate` is judged on what came after it.
-  const done = BEATS.map((beat, i) => (i === 0 ? false : beatIsDone(beat, state, manifests, warnings)));
+  // Every leg but `ideate` is judged on its own; `ideate` is judged on what came after it.
+  const done = LEGS.map((leg, i) => (i === 0 ? false : legIsDone(leg, state, manifests, warnings)));
   done[0] = ideateIsDone(state, done.some(Boolean));
 
   const current = done.indexOf(false);
-  const beat = current === -1 ? null : BEATS[current].id;
+  const beat = current === -1 ? null : LEGS[current].id;
   const lastComplete = done.lastIndexOf(true);
 
   const result = {
     beat,
-    index: current === -1 ? BEATS.length : current + 1,
-    completed: BEATS.filter((_, i) => done[i]).map((entry) => entry.id),
-    // Holes: incomplete beats that later work has already run past. The current beat is one of them
+    index: current === -1 ? LEGS.length : current + 1,
+    completed: LEGS.filter((_, i) => done[i]).map((entry) => entry.id),
+    // Holes: incomplete legs that later work has already run past. The current leg is one of them
     // by construction and is excluded — it is already reported as `beat`, and naming it twice would
-    // have the baton say "do the worktree beat" and "you skipped the worktree beat" at once.
-    skipped: BEATS.filter((_, i) => !done[i] && i > current && i < lastComplete).map((entry) => entry.id),
+    // have the baton say "do the bay leg" and "you skipped the bay leg" at once.
+    skipped: LEGS.filter((_, i) => !done[i] && i > current && i < lastComplete).map((entry) => entry.id),
     provider: beat === null ? undefined : manifests.get(beat),
     branch: state.branch,
     changeId: discoverChangeId(root),

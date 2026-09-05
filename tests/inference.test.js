@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
-import { resolveBeat } from '../src/inference.js';
+import { LEGS } from '../src/legs.js';
+import { resolveLeg } from '../src/inference.js';
 import { executeProgress } from '../src/progress.js';
 import { loadBookings } from '../src/bookings.js';
 import {
@@ -30,7 +30,7 @@ import { cleanupFixture } from './fixtures/cleanup.js';
 after(cleanupAll);
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
-const KNOWN_STAGES = BEATS.map((beat) => beat.id);
+const KNOWN_STAGES = LEGS.map((leg) => leg.id);
 
 /** A `PATH` with the real openspec CLI removed, so inference is judged on repository state alone. */
 const absent = () => pathWithout('openspec');
@@ -39,7 +39,7 @@ const absent = () => pathWithout('openspec');
  * @param {string} dir
  * @param {Map<string, import('../src/bookings.js').Booking>} [providers]
  */
-const resolve = (dir, providers) => withPath(absent(), () => resolveBeat(dir, providers));
+const resolve = (dir, providers) => withPath(absent(), () => resolveLeg(dir, providers));
 
 /**
  * @param {Record<string,string>} files basename → contents
@@ -52,11 +52,11 @@ function providerMap(files) {
   return loadBookings(dir, { knownStages: KNOWN_STAGES });
 }
 
-describe('BEATS', () => {
+describe('LEGS', () => {
   it('is the fixed seven-beat model, in order', () => {
     assert.deepEqual(KNOWN_STAGES, [
       'ideate',
-      'worktree',
+      'bay',
       'refine',
       'contract',
       'specs',
@@ -66,7 +66,7 @@ describe('BEATS', () => {
   });
 
   it('has one fixture per beat and no strays — criterion 1 counts this directory', () => {
-    assert.equal(fs.readdirSync(FIXTURES).length, BEATS.length);
+    assert.equal(fs.readdirSync(FIXTURES).length, LEGS.length);
   });
 });
 
@@ -78,7 +78,7 @@ describe('the shipped bookings', () => {
 
   it('binds a baton to all seven beats — the loop is closed', () => {
     // `worktree` and `cleanup` are wrapper-owned for *detection* and provider-bound for their
-    // batons: `owner` in BEATS says who supplies the detector, not who supplies the command and
+    // batons: `owner` in LEGS says who supplies the detector, not who supplies the command and
     // the prose.
     assert.deepEqual([...providers.keys()].sort(), [...KNOWN_STAGES].sort());
   });
@@ -106,10 +106,10 @@ describe('the shipped bookings', () => {
   });
 });
 
-describe('resolveBeat', () => {
+describe('resolveLeg', () => {
   const cases = [
     ['ideate', ideateFixture],
-    ['worktree', worktreeFixture],
+    ['bay', worktreeFixture],
     ['refine', refineFixture],
     ['contract', contractFixture],
     ['specs', specsFixture],
@@ -186,7 +186,7 @@ describe('resolveBeat', () => {
       ['if [ "$1" = "--version" ]; then echo "1.9.0"; exit 0; fi', `echo '${listing}'`].join('\n'),
     );
 
-    const result = withPath(`${stub}:${absent()}`, () => resolveBeat(dir));
+    const result = withPath(`${stub}:${absent()}`, () => resolveLeg(dir));
     assert.equal(result.beat, 'execute');
     assert.equal(result.progress.changeId, CHANGE_ID);
     assert.equal(result.changeId, CHANGE_ID);
@@ -198,7 +198,7 @@ describe('resolveBeat', () => {
     writeFile(path.join(dir, 'docs', 'ideation', 'thing', 'contract.md'), '# Contract\n');
 
     const result = resolve(dir);
-    assert.equal(result.beat, 'worktree');
+    assert.equal(result.beat, 'bay');
     assert.deepEqual(result.completed, ['ideate', 'refine', 'contract']);
     assert.deepEqual(result.skipped, []);
   });
@@ -209,7 +209,7 @@ describe('resolveBeat', () => {
     writeFile(path.join(dir, 'openspec', 'changes', CHANGE_ID, 'tasks.md'), '- [ ] a\n');
 
     const result = resolve(dir);
-    assert.equal(result.beat, 'worktree');
+    assert.equal(result.beat, 'bay');
     assert.deepEqual(result.completed, ['ideate', 'contract', 'specs']);
     assert.deepEqual(result.skipped, ['refine']);
   });
@@ -222,7 +222,7 @@ describe('resolveBeat', () => {
     git(repo, ['add', '-A']);
     git(repo, ['commit', '-m', 'every artifact']);
 
-    // Registered off the `gwt` path on purpose: `worktreeIsDone` sees a linked worktree while
+    // Registered off the `gwt` path on purpose: `bayIsDone` sees a linked worktree while
     // `cleanupIsDone` sees nothing at the convention path, which is the one arrangement in which
     // all seven beats can be complete at once (both detectors are convention-keyed by design).
     const elsewhere = path.join(tempRoot(), 'off-convention');
@@ -230,7 +230,7 @@ describe('resolveBeat', () => {
 
     const result = resolve(elsewhere);
     assert.equal(result.beat, null);
-    assert.equal(result.index, BEATS.length);
+    assert.equal(result.index, LEGS.length);
     assert.deepEqual(result.completed, KNOWN_STAGES);
     assert.deepEqual(result.skipped, []);
     assert.equal(result.provider, undefined);

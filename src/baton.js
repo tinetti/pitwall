@@ -1,4 +1,4 @@
-import { BEATS } from './beats.js';
+import { LEGS } from './legs.js';
 
 /**
  * What the `handoff` key means for the operator. An unrecognised value is rendered verbatim rather
@@ -45,13 +45,13 @@ const INDENT = '  ';
 function header(state) {
   const position =
     state.beat === null
-      ? `all ${BEATS.length} beats complete`
-      : `beat ${state.index} of ${BEATS.length} (${state.beat})`;
+      ? `all ${LEGS.length} beats complete`
+      : `beat ${state.index} of ${LEGS.length} (${state.beat})`;
   return state.branch ? `${state.branch} · ${position}` : position;
 }
 
 /**
- * The beat strip: a positional walk of {@link BEATS}, not a replay of `completed`. Work done out of
+ * The beat strip: a positional walk of {@link LEGS}, not a replay of `completed`. Work done out of
  * order leaves completed beats *after* the current one, and concatenating the two lists would print
  * them in an order the repository never went through.
  *
@@ -63,7 +63,7 @@ function strip(state) {
   const skipped = new Set(state.skipped);
   const lines = [];
 
-  const ticks = BEATS.filter((beat) => completed.has(beat.id)).map((beat) => `✓ ${beat.id}`);
+  const ticks = LEGS.filter((beat) => completed.has(beat.id)).map((beat) => `✓ ${beat.id}`);
   if (ticks.length > 0) lines.push(`${INDENT}${ticks.join('  ')}`);
 
   if (state.beat !== null) {
@@ -73,7 +73,7 @@ function strip(state) {
     lines.push(`${INDENT}▶ ${state.beat}${progress}`);
   }
 
-  for (const beat of BEATS) {
+  for (const beat of LEGS) {
     if (skipped.has(beat.id)) lines.push(`${INDENT}⚠ ${beat.id} (skipped)`);
   }
   return lines;

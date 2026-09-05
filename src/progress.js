@@ -99,7 +99,7 @@ function changeIds(repoRoot) {
  * back to the last name when every change is finished. `openspec list --json` is picked from by the
  * same rule, so the two sources agree whenever they see the same changes — but they need not see the
  * same ones: this walk requires a `tasks.md` and the CLI does not, so the CLI can name a change this
- * function returns `null` for. `resolveBeat` resolves that one-sided case in the CLI's favour.
+ * function returns `null` for. `resolveLeg` resolves that one-sided case in the CLI's favour.
  *
  * @param {string} repoRoot
  * @returns {string|null}

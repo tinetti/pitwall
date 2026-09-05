@@ -1,5 +1,5 @@
 ---
-leg: worktree
+leg: bay
 command: /pitwall:start
 model: haiku
 effort: low

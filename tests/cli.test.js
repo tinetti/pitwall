@@ -122,7 +122,7 @@ describe('pw next', () => {
     assert.equal(state.beat, 'specs');
     assert.equal(state.index, 5);
     assert.equal(state.branch, fixture.branch);
-    assert.deepEqual(state.completed, ['ideate', 'worktree', 'refine', 'contract']);
+    assert.deepEqual(state.completed, ['ideate', 'bay', 'refine', 'contract']);
     assert.equal(state.provider.command, '/spec:propose');
   });
 
@@ -204,10 +204,10 @@ describe('pw start', () => {
     assert.equal(result.err, '');
     assert.equal(fs.existsSync(target), true);
     assert.match(result.out, new RegExp(`^ {2}cd ${target}$`, 'm'));
-    // The baton must be resolved from the *new* tree: from the operator's cwd the worktree beat
-    // still reads as outstanding, and the command would hand back the beat it has just done.
+    // The baton must be resolved from the *new* tree: from the operator's cwd the bay leg
+    // still reads as outstanding, and the command would hand back the leg it has just done.
     assert.match(result.out, /^feat\/demo · beat 3 of 7 \(refine\)$/m);
-    assert.match(result.out, /✓ worktree/);
+    assert.match(result.out, /✓ bay/);
   });
 
   it('is a clean no-op on a second run, and still prints the baton', () => {

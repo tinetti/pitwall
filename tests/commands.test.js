@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
+import { LEGS } from '../src/legs.js';
 import { renderBaton } from '../src/baton.js';
 import { parseManifest } from '../src/frontmatter.js';
 import { loadBookings } from '../src/bookings.js';
@@ -212,7 +212,7 @@ describe('the worked alternative binding in examples/', () => {
       path.join(dir, 'openspec-execute.md'),
     );
 
-    const providers = loadBookings(dir, { knownStages: BEATS.map((beat) => beat.id) });
+    const providers = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) });
     const provider = providers.get('execute');
     assert.ok(provider, 'the swapped manifest does not bind the execute stage');
     assert.equal(provider.command, 'superpowers:subagent-driven-development');
@@ -225,14 +225,14 @@ describe('the worked alternative binding in examples/', () => {
       path.join(ROOT, 'examples', 'superpowers-execute.md'),
       path.join(dir, 'openspec-execute.md'),
     );
-    const provider = loadBookings(dir, { knownStages: BEATS.map((beat) => beat.id) }).get('execute');
+    const provider = loadBookings(dir, { knownStages: LEGS.map((leg) => leg.id) }).get('execute');
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.
     const baton = renderBaton({
       beat: 'execute',
       index: 6,
-      completed: ['ideate', 'worktree', 'refine', 'contract', 'specs'],
+      completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],
       skipped: [],
       provider,
       branch: 'feat/thing',

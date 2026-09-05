@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BEATS } from '../src/beats.js';
+import { LEGS } from '../src/legs.js';
 import { renderBaton } from '../src/baton.js';
-import { resolveBeat } from '../src/inference.js';
+import { resolveLeg } from '../src/inference.js';
 import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
 import { cleanupFixture } from './fixtures/cleanup.js';
@@ -14,7 +14,7 @@ import { cleanupFixture } from './fixtures/cleanup.js';
 after(cleanupAll);
 
 const SHIPPED = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bookings');
-const KNOWN_STAGES = BEATS.map((beat) => beat.id);
+const KNOWN_STAGES = LEGS.map((leg) => leg.id);
 
 /** The booking under test, swapped whole: a different command *and* a different stamp. */
 const ALTERNATE = [
@@ -51,7 +51,7 @@ function committedCopy() {
 }
 
 const load = (dir) => loadBookings(dir, { knownStages: KNOWN_STAGES });
-const resolve = (dir, providers) => withPath(pathWithout('openspec'), () => resolveBeat(dir, providers));
+const resolve = (dir, providers) => withPath(pathWithout('openspec'), () => resolveLeg(dir, providers));
 
 describe('swapping one booking', () => {
   it('costs exactly one file edit, and that file is a booking', () => {
