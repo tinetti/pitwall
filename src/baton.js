@@ -19,7 +19,7 @@ const DEFAULT_HANDOVER = 'run:';
  *
  * A Map rather than an object literal, for the same reason `src/cli.js` uses one for subcommands: a
  * manifest whose `argument` reads `constructor` would find a function on a plain object's prototype
- * and be called with the inference state. `loadProviders` rejects that key today, so this is depth
+ * and be called with the inference state. `loadBookings` rejects that key today, so this is depth
  * rather than a live bug — but the renderer is also reachable with hand-built providers from tests
  * and from `pw start`, and a lookup table should not depend on its only caller validating for it.
  */
@@ -106,7 +106,7 @@ function nextBlock(state) {
     return [
       'NEXT:',
       `${INDENT}no provider manifest is bound to the ${state.beat} beat`,
-      `${INDENT}└ add one under providers/ to give this beat a baton`,
+      `${INDENT}└ add one under bookings/ to give this beat a baton`,
     ];
   }
 

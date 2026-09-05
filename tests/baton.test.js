@@ -252,7 +252,7 @@ describe('renderBaton NEXT block', () => {
   it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
     const output = renderBaton(state({ beat: 'worktree', index: 2, provider: undefined }), CLEAN);
     assert.match(output, /NEXT:\n {2}no provider manifest is bound to the worktree beat/);
-    assert.match(output, /providers\//);
+    assert.match(output, /bookings\//);
   });
 });
 
@@ -305,7 +305,7 @@ describe('renderBaton reports what it could not do', () => {
 
   it('names the offending manifest when a detector could not run', () => {
     const output = renderBaton(
-      state({ warnings: ['/providers/openspec-specs.md: doneWhenCmd command not found: nope'] }),
+      state({ warnings: ['/bookings/openspec-specs.md: stampCmd command not found: nope'] }),
       CLEAN,
     );
     assert.match(output, /^WARNINGS:$/m);
