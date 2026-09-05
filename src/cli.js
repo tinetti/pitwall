@@ -2,9 +2,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LEGS } from './legs.js';
-import { renderBaton, renderPosition } from './baton.js';
+import { renderWaybill, renderPosition } from './waybill.js';
 import { BUILTIN_BOOKINGS, resolveLeg } from './inference.js';
-import { artifactPaths, checkIgnored } from './preflight.js';
+import { paperPaths, checkIgnored } from './inspection.js';
 import { loadBookings } from './bookings.js';
 import { checkoutRoot, superprojectRoot } from './repo.js';
 import { BayError, isInside, startBay } from './bay.js';
@@ -82,7 +82,7 @@ function next(cwd, args, io) {
     return 0;
   }
 
-  io.out(renderBaton(state, checkIgnored(root, artifactPaths(providers))));
+  io.out(renderWaybill(state, checkIgnored(root, paperPaths(providers))));
   return 0;
 }
 
@@ -111,7 +111,7 @@ function status(cwd, args, io) {
   const providers = loadBookings(BUILTIN_BOOKINGS, { knownStages: LEGS.map((leg) => leg.id) });
   const state = resolveLeg(cwd, providers);
 
-  io.out(renderPosition(state, checkIgnored(root, artifactPaths(providers))));
+  io.out(renderPosition(state, checkIgnored(root, paperPaths(providers))));
   return 0;
 }
 
@@ -171,7 +171,7 @@ function start(cwd, args, io) {
       ];
 
   io.out(`${lines.join('\n')}\n\n`);
-  io.out(renderBaton(state, checkIgnored(result.path, artifactPaths(providers))));
+  io.out(renderWaybill(state, checkIgnored(result.path, paperPaths(providers))));
   return 0;
 }
 

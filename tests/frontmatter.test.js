@@ -1,11 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseManifest } from '../src/frontmatter.js';
+import { parseFrontmatter } from '../src/frontmatter.js';
 
-describe('parseManifest — accepted syntax', () => {
+describe('parseFrontmatter — accepted syntax', () => {
   it('parses flat key: value scalars and returns the body verbatim', () => {
-    const { meta, body } = parseManifest(
+    const { meta, body } = parseFrontmatter(
       ['---', 'stage: contract', 'command: /ideation:ideation', 'model: opus', '---', 'Baton text.', ''].join('\n'),
     );
     assert.deepEqual(meta, {
@@ -17,52 +17,52 @@ describe('parseManifest — accepted syntax', () => {
   });
 
   it('splits on the first colon only, so command values keep their own colons', () => {
-    const { meta } = parseManifest('---\ncommand: /ideation:ideation\n---\n');
+    const { meta } = parseFrontmatter('---\ncommand: /ideation:ideation\n---\n');
     assert.equal(meta.command, '/ideation:ideation');
   });
 
   it('accepts an unquoted glob containing *', () => {
-    const { meta } = parseManifest('---\ndoneWhenPathExists: docs/ideation/*/contract-data.json\n---\n');
+    const { meta } = parseFrontmatter('---\ndoneWhenPathExists: docs/ideation/*/contract-data.json\n---\n');
     assert.equal(meta.doneWhenPathExists, 'docs/ideation/*/contract-data.json');
   });
 
   it('accepts a manifest with zero keys', () => {
-    const { meta, body } = parseManifest('---\n---\nbody\n');
+    const { meta, body } = parseFrontmatter('---\n---\nbody\n');
     assert.deepEqual(meta, {});
     assert.equal(body, 'body\n');
   });
 
   it('accepts a manifest with one key and an empty body', () => {
-    const { meta, body } = parseManifest('---\nstage: specs\n---\n');
+    const { meta, body } = parseFrontmatter('---\nstage: specs\n---\n');
     assert.deepEqual(meta, { stage: 'specs' });
     assert.equal(body, '');
   });
 
   it('preserves a literal --- line inside the body', () => {
-    const { meta, body } = parseManifest('---\nstage: execute\n---\nintro\n\n---\n\noutro\n');
+    const { meta, body } = parseFrontmatter('---\nstage: execute\n---\nintro\n\n---\n\noutro\n');
     assert.equal(meta.stage, 'execute');
     assert.equal(body, 'intro\n\n---\n\noutro\n');
   });
 
   it('returns the whole source as body when there is no frontmatter', () => {
     const source = 'no fences here\njust prose\n';
-    const { meta, body } = parseManifest(source);
+    const { meta, body } = parseFrontmatter(source);
     assert.deepEqual(meta, {});
     assert.equal(body, source);
   });
 
   it('trims values and blank frontmatter lines', () => {
-    const { meta } = parseManifest('---\n\nstage:   contract   \n\nmodel: opus\n---\n');
+    const { meta } = parseFrontmatter('---\n\nstage:   contract   \n\nmodel: opus\n---\n');
     assert.deepEqual(meta, { stage: 'contract', model: 'opus' });
   });
 
   it('keeps an empty value as an empty string', () => {
-    const { meta } = parseManifest('---\nhandoff:\n---\n');
+    const { meta } = parseFrontmatter('---\nhandoff:\n---\n');
     assert.deepEqual(meta, { handoff: '' });
   });
 
   it('strips quotes only when they wrap the entire value', () => {
-    const { meta } = parseManifest(
+    const { meta } = parseFrontmatter(
       ['---', 'a: "quoted value"', "b: 'single'", 'c: say "hi" now', 'd: "unbalanced', '---', ''].join('\n'),
     );
     assert.equal(meta.a, 'quoted value');
@@ -72,21 +72,21 @@ describe('parseManifest — accepted syntax', () => {
   });
 
   it('tolerates CRLF line endings', () => {
-    const { meta, body } = parseManifest('---\r\nstage: specs\r\n---\r\nbaton\r\n');
+    const { meta, body } = parseFrontmatter('---\r\nstage: specs\r\n---\r\nbaton\r\n');
     assert.deepEqual(meta, { stage: 'specs' });
     assert.equal(body, 'baton\n');
   });
 
   it('does not coerce numbers or booleans', () => {
-    const { meta } = parseManifest('---\neffort: 3\nhandoff: true\n---\n');
+    const { meta } = parseFrontmatter('---\neffort: 3\nhandoff: true\n---\n');
     assert.equal(meta.effort, '3');
     assert.equal(meta.handoff, 'true');
   });
 });
 
-describe('parseManifest — rejected syntax', () => {
+describe('parseFrontmatter — rejected syntax', () => {
   const rejects = (source, pattern) => {
-    assert.throws(() => parseManifest(source, '/tmp/x.md'), pattern);
+    assert.throws(() => parseFrontmatter(source, '/tmp/x.md'), pattern);
   };
 
   it('rejects an unterminated fence, naming the path and line', () => {
@@ -122,6 +122,6 @@ describe('parseManifest — rejected syntax', () => {
   });
 
   it('names a default source label when no path is given', () => {
-    assert.throws(() => parseManifest('---\n- one\n---\n'), /<manifest>:2:/);
+    assert.throws(() => parseFrontmatter('---\n- one\n---\n'), /<manifest>:2:/);
   });
 });

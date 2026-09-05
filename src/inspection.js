@@ -70,7 +70,7 @@ function collapse(paths) {
  * @param {Map<string, Pick<import('./bookings.js').Booking,'stampPath'>>} providers
  * @returns {string[]} repo-relative queries, ready for {@link checkIgnored}
  */
-export function artifactPaths(providers) {
+export function paperPaths(providers) {
   const paths = [...WRAPPER_PATHS];
   for (const provider of providers.values()) {
     if (!provider.stampPath) continue;

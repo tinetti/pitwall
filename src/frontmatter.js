@@ -41,7 +41,7 @@ function stripWrappingQuotes(value) {
  * @returns {{ meta: Record<string,string>, body: string }}
  * @throws {Error} on list, nested, or block scalar syntax, a duplicate key, or a missing fence
  */
-export function parseManifest(source, path) {
+export function parseFrontmatter(source, path) {
   const label = path ?? '<manifest>';
   const text = source.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const lines = text.split('\n');

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LEGS } from '../src/legs.js';
-import { renderBaton } from '../src/baton.js';
+import { renderWaybill } from '../src/waybill.js';
 import { resolveLeg } from '../src/inference.js';
 import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
@@ -84,11 +84,11 @@ describe('swapping one booking', () => {
     const fixture = cleanupFixture();
     const clean = { ignored: [], warnings: [] };
 
-    const before = renderBaton(resolve(fixture.dir, load(dir)), clean);
+    const before = renderWaybill(resolve(fixture.dir, load(dir)), clean);
     assert.equal(before.includes('/ideation:execute-spec'), false);
 
     writeFile(path.join(dir, 'openspec-execute.md'), ALTERNATE);
-    const after = renderBaton(resolve(fixture.dir, load(dir)), clean);
+    const after = renderWaybill(resolve(fixture.dir, load(dir)), clean);
 
     assert.match(after, /^ {2}\/ideation:execute-spec/m);
     assert.equal(after.includes('/spec:apply'), false);

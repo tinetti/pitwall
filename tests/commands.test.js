@@ -6,8 +6,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { LEGS } from '../src/legs.js';
-import { renderBaton } from '../src/baton.js';
-import { parseManifest } from '../src/frontmatter.js';
+import { renderWaybill } from '../src/waybill.js';
+import { parseFrontmatter } from '../src/frontmatter.js';
 import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, tempRoot, writeFile } from './helpers/repo-fixture.js';
 
@@ -76,7 +76,7 @@ function problems(dir, files) {
     const file = path.join(dir, ...rel.split('/'));
     let meta;
     try {
-      ({ meta } = parseManifest(fs.readFileSync(file, 'utf8'), rel));
+      ({ meta } = parseFrontmatter(fs.readFileSync(file, 'utf8'), rel));
     } catch (error) {
       // Already `<file>:<line>: <message>` — the parser names its own source.
       found.push(error.message);
@@ -158,7 +158,7 @@ describe('the shipped command set', () => {
     };
     for (const [rel, expected] of Object.entries(routing)) {
       const source = fs.readFileSync(path.join(COMMANDS, ...rel.split('/')), 'utf8');
-      const { meta } = parseManifest(source, rel);
+      const { meta } = parseFrontmatter(source, rel);
       assert.equal(meta.model, expected.model, rel);
       assert.equal(meta.effort, expected.effort, rel);
       assert.match(source, /\$ARGUMENTS/, `${rel} lost its argument line`);
@@ -229,7 +229,7 @@ describe('the worked alternative binding in examples/', () => {
 
     // `changeId` is deliberately non-null: `argument: none` is the only thing keeping it off the
     // end of a skill name that takes no argument.
-    const baton = renderBaton({
+    const baton = renderWaybill({
       beat: 'execute',
       index: 6,
       completed: ['ideate', 'bay', 'refine', 'contract', 'specs'],

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-import { parseManifest } from './frontmatter.js';
+import { parseFrontmatter } from './frontmatter.js';
 
 /**
  * @typedef {{leg:string,command:string,model:string,effort?:string,handover?:string,
@@ -49,7 +49,7 @@ export function loadBookings(dir, options = {}) {
   const bookings = new Map();
   for (const entry of entries.filter((name) => name.endsWith('.md')).sort()) {
     const file = path.join(dir, entry);
-    const { meta, body } = parseManifest(fs.readFileSync(file, 'utf8'), file);
+    const { meta, body } = parseFrontmatter(fs.readFileSync(file, 'utf8'), file);
 
     for (const key of REQUIRED) {
       if (!meta[key]) throw new Error(`${file}: missing required key \`${key}\``);

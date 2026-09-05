@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LEGS } from '../src/legs.js';
-import { renderBaton, renderPosition } from '../src/baton.js';
+import { renderWaybill, renderPosition } from '../src/waybill.js';
 import { resolveLeg } from '../src/inference.js';
 import { cleanupAll, createRepo, git, pathWithout, tempRoot, withPath, writeFile } from './helpers/repo-fixture.js';
 import { ideateFixture } from './fixtures/ideate.js';
@@ -74,7 +74,7 @@ function state(overrides = {}) {
   };
 }
 
-describe('renderBaton golden output', () => {
+describe('renderWaybill golden output', () => {
   const cases = [
     ['ideate', ideateFixture],
     ['worktree', worktreeFixture],
@@ -87,7 +87,7 @@ describe('renderBaton golden output', () => {
 
   for (const [id, build] of cases) {
     it(`renders the ${id} beat`, () => {
-      assertGolden(id, renderBaton(resolve(build().dir), CLEAN));
+      assertGolden(id, renderWaybill(resolve(build().dir), CLEAN));
     });
   }
 
@@ -108,26 +108,26 @@ describe('renderBaton golden output', () => {
 
     const result = resolve(elsewhere);
     assert.equal(result.beat, null);
-    assertGolden('complete', renderBaton(result, CLEAN));
+    assertGolden('complete', renderWaybill(result, CLEAN));
   });
 });
 
-describe('renderBaton header and beat strip', () => {
+describe('renderWaybill header and beat strip', () => {
   it('names the branch, the position, and the current beat', () => {
     assert.equal(
-      renderBaton(state(), CLEAN).split('\n')[0],
+      renderWaybill(state(), CLEAN).split('\n')[0],
       `feat/session-handoff · beat 5 of ${LEGS.length} (specs)`,
     );
   });
 
   it('drops the branch prefix entirely on a detached HEAD rather than printing null', () => {
-    const first = renderBaton(state({ branch: null }), CLEAN).split('\n')[0];
+    const first = renderWaybill(state({ branch: null }), CLEAN).split('\n')[0];
     assert.equal(first, `beat 5 of ${LEGS.length} (specs)`);
     assert.equal(first.includes('null'), false);
   });
 
   it('walks the beat list positionally, so completed beats after the current one keep their place', () => {
-    const output = renderBaton(
+    const output = renderWaybill(
       state({ beat: 'bay', index: 2, completed: ['ideate', 'refine', 'contract'], provider: undefined }),
       CLEAN,
     );
@@ -136,12 +136,12 @@ describe('renderBaton header and beat strip', () => {
   });
 
   it('names a skipped beat rather than hiding it', () => {
-    const output = renderBaton(state({ skipped: ['refine'] }), CLEAN);
+    const output = renderWaybill(state({ skipped: ['refine'] }), CLEAN);
     assert.match(output, /^ {2}⚠ refine \(skipped\)$/m);
   });
 
   it('says every beat is complete when the walk fell off the end', () => {
-    const output = renderBaton(
+    const output = renderWaybill(
       state({ beat: null, index: 7, completed: LEGS.map((leg) => leg.id), provider: undefined }),
       CLEAN,
     );
@@ -151,9 +151,9 @@ describe('renderBaton header and beat strip', () => {
   });
 });
 
-describe('renderBaton progress', () => {
+describe('renderWaybill progress', () => {
   const withProgress = (done, total) =>
-    renderBaton(
+    renderWaybill(
       state({
         beat: 'execute',
         index: 6,
@@ -178,17 +178,17 @@ describe('renderBaton progress', () => {
   });
 
   it('omits the progress suffix on the six beats that carry none', () => {
-    assert.match(renderBaton(state(), CLEAN), /^ {2}▶ specs$/m);
+    assert.match(renderWaybill(state(), CLEAN), /^ {2}▶ specs$/m);
   });
 });
 
-describe('renderBaton NEXT block', () => {
+describe('renderWaybill NEXT block', () => {
   /**
    * @param {Partial<import('../src/bookings.js').Booking>} provider
    * @param {Partial<import('../src/inference.js').Inference>} [rest]
    */
   const next = (provider, rest = {}) =>
-    renderBaton(state({ ...rest, provider: { ...state().provider, ...provider } }), CLEAN);
+    renderWaybill(state({ ...rest, provider: { ...state().provider, ...provider } }), CLEAN);
 
   it('interpolates the command and the change id', () => {
     assert.match(next({}), /^ {2}\/spec:propose add-session-handoff$/m);
@@ -250,7 +250,7 @@ describe('renderBaton NEXT block', () => {
   });
 
   it('says so plainly when no manifest is bound to the beat, instead of emitting an empty block', () => {
-    const output = renderBaton(state({ beat: 'bay', index: 2, provider: undefined }), CLEAN);
+    const output = renderWaybill(state({ beat: 'bay', index: 2, provider: undefined }), CLEAN);
     assert.match(output, /NEXT:\n {2}no provider manifest is bound to the bay beat/);
     assert.match(output, /bookings\//);
   });
@@ -258,7 +258,7 @@ describe('renderBaton NEXT block', () => {
 
 describe('renderPosition', () => {
   it('renders the header and the beat strip exactly as the baton does', () => {
-    const baton = renderBaton(state(), CLEAN).split('\n\n')[0];
+    const baton = renderWaybill(state(), CLEAN).split('\n\n')[0];
     assert.equal(renderPosition(state(), CLEAN), `${baton}\n`);
   });
 
@@ -291,20 +291,20 @@ describe('renderPosition', () => {
   });
 });
 
-describe('renderBaton reports what it could not do', () => {
+describe('renderWaybill reports what it could not do', () => {
   it('names every gitignored artifact path', () => {
-    const output = renderBaton(state(), { ignored: ['openspec/', 'docs/ideation/'], warnings: [] });
+    const output = renderWaybill(state(), { ignored: ['openspec/', 'docs/ideation/'], warnings: [] });
     assert.match(output, /^IGNORED BY GIT:$/m);
     assert.match(output, /^ {2}⚠ openspec\/ /m);
     assert.match(output, /^ {2}⚠ docs\/ideation\/ /m);
   });
 
   it('omits the ignored block entirely when the repository is clean', () => {
-    assert.equal(renderBaton(state(), CLEAN).includes('IGNORED BY GIT'), false);
+    assert.equal(renderWaybill(state(), CLEAN).includes('IGNORED BY GIT'), false);
   });
 
   it('names the offending manifest when a detector could not run', () => {
-    const output = renderBaton(
+    const output = renderWaybill(
       state({ warnings: ['/bookings/openspec-specs.md: stampCmd command not found: nope'] }),
       CLEAN,
     );
@@ -313,7 +313,7 @@ describe('renderBaton reports what it could not do', () => {
   });
 
   it('reports a preflight that could not answer alongside the inference warnings', () => {
-    const output = renderBaton(state({ warnings: ['inference said so'] }), {
+    const output = renderWaybill(state({ warnings: ['inference said so'] }), {
       ignored: [],
       warnings: ['preflight said so'],
     });
@@ -322,7 +322,7 @@ describe('renderBaton reports what it could not do', () => {
   });
 
   it('always ends with exactly one trailing newline', () => {
-    const output = renderBaton(state(), CLEAN);
+    const output = renderWaybill(state(), CLEAN);
     assert.equal(output.endsWith('\n'), true);
     assert.equal(output.endsWith('\n\n'), false);
   });

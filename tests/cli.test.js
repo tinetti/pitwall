@@ -45,7 +45,7 @@ function isolated(fn) {
  * Drive `run` exactly the way phase 5's `bin/pw` will — argv after the program name, both streams
  * injected — so this suite covers the same entry point the wrapper will call rather than a subshell.
  *
- * The real `openspec` binary is removed from `PATH` for the same reason `tests/baton.test.js`
+ * The real `openspec` binary is removed from `PATH` for the same reason `tests/waybill.test.js`
  * removes it: the golden comparison is byte-exact, and a CLI installed on the developer's machine
  * must not be able to change what is rendered.
  *

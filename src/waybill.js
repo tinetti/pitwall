@@ -86,7 +86,7 @@ function strip(state) {
  * @param {string} body
  * @returns {string[]}
  */
-function batonText(body) {
+function waybillText(body) {
   const trimmed = body.trim();
   if (trimmed === '') return [];
   return ['', ...trimmed.split('\n').map((line) => (line === '' ? '' : `${INDENT}${line}`))];
@@ -128,7 +128,7 @@ function nextBlock(state) {
     `${INDENT}${HANDOVER_LINES[provider.handover] ?? provider.handover ?? DEFAULT_HANDOVER}`,
     `${INDENT}${command}`,
     `${INDENT}└ ${detail}`,
-    ...batonText(provider.body),
+    ...waybillText(provider.body),
   ];
 }
 
@@ -139,7 +139,7 @@ function nextBlock(state) {
  *
  * @param {string[]} sections
  * @param {import('./inference.js').Inference} state
- * @param {import('./preflight.js').Preflight} preflight
+ * @param {import('./inspection.js').Preflight} preflight
  * @returns {string} ends with exactly one newline
  */
 function withFindings(sections, state, preflight) {
@@ -172,10 +172,10 @@ function withFindings(sections, state, preflight) {
  * there.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./preflight.js').Preflight} [preflight]
+ * @param {import('./inspection.js').Preflight} [preflight]
  * @returns {string} ends with exactly one newline
  */
-export function renderBaton(state, preflight = { ignored: [], warnings: [] }) {
+export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) {
   const position = [header(state), ...strip(state)].join('\n');
   return withFindings([position, nextBlock(state).join('\n')], state, preflight);
 }
@@ -185,11 +185,11 @@ export function renderBaton(state, preflight = { ignored: [], warnings: [] }) {
  *
  * The NEXT block is the one thing left out, and leaving it out is the point: re-issuing an
  * instruction to an operator who has already acted on it invites it to be run twice. Sharing
- * {@link withFindings} with {@link renderBaton} is what keeps the two surfaces from disagreeing
+ * {@link withFindings} with {@link renderWaybill} is what keeps the two surfaces from disagreeing
  * about where the same repository stands.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./preflight.js').Preflight} [preflight]
+ * @param {import('./inspection.js').Preflight} [preflight]
  * @returns {string} ends with exactly one newline
  */
 export function renderPosition(state, preflight = { ignored: [], warnings: [] }) {

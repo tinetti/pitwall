@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LEGS } from '../src/legs.js';
-import { artifactPaths, checkIgnored } from '../src/preflight.js';
+import { paperPaths, checkIgnored } from '../src/inspection.js';
 import { loadBookings } from '../src/bookings.js';
 import { cleanupAll, createRepo, tempRoot, writeFile } from './helpers/repo-fixture.js';
 
@@ -85,7 +85,7 @@ describe('checkIgnored', () => {
     assert.deepEqual(check(dir, ['openspec/']).ignored, ['openspec/']);
   });
 
-  it('matches a glob-free directory manifest, because artifactPaths gives it the slash it needs', () => {
+  it('matches a glob-free directory manifest, because paperPaths gives it the slash it needs', () => {
     // A directory-only rule naming the artifact directory itself matches a path that does not exist
     // yet only when the query says it is a directory, so a manifest that happens to carry no glob
     // would otherwise slip past the very check this exists for.
@@ -93,7 +93,7 @@ describe('checkIgnored', () => {
     assert.deepEqual(check(dir, ['plans/changes']).ignored, [], 'git needs the slash');
 
     const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
-    const queries = artifactPaths(providers);
+    const queries = paperPaths(providers);
     assert.ok(queries.includes('plans/changes/'), `no directory query in ${queries.join(', ')}`);
     assert.deepEqual(check(dir, queries).ignored, ['plans/changes/']);
   });
@@ -123,15 +123,15 @@ describe('checkIgnored', () => {
   });
 });
 
-describe('artifactPaths', () => {
+describe('paperPaths', () => {
   const shipped = () => loadBookings(PROVIDERS, { knownStages: LEGS.map((leg) => leg.id) });
 
   it('de-globs the shipped manifests down to the two wrapper-owned directories', () => {
-    assert.deepEqual(artifactPaths(shipped()), ['docs/ideation/', 'openspec/']);
+    assert.deepEqual(paperPaths(shipped()), ['docs/ideation/', 'openspec/']);
   });
 
   it('never hands a glob to git, because a glob would be reported back verbatim', () => {
-    for (const query of artifactPaths(shipped())) {
+    for (const query of paperPaths(shipped())) {
       assert.equal(/[*?]/.test(query), false, `${query} still contains a glob`);
     }
   });
@@ -141,26 +141,26 @@ describe('artifactPaths', () => {
       ['specs', { leg: 'specs', stampPath: 'openspec/changes/*/tasks.md' }],
       ['execute', { leg: 'execute', stampPath: 'openspec/changes/*/design.md' }],
     ]);
-    assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/']);
+    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/']);
   });
 
   it('keeps a directory the wrapper does not already cover', () => {
     const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/*/tasks.md' }]]);
-    assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/', 'plans/']);
+    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/', 'plans/']);
   });
 
   it('ignores a manifest that detects by command only', () => {
     const providers = new Map([['ideate', { leg: 'ideate', stampCmd: 'false' }]]);
-    assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/']);
+    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/']);
   });
 
   it('queries a glob-free file pattern without inventing a trailing slash', () => {
     const providers = new Map([['specs', { leg: 'specs', stampPath: 'notes/PLAN.md' }]]);
-    assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'notes/PLAN.md', 'openspec/']);
+    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'notes/PLAN.md', 'openspec/']);
   });
 
   it('marks a glob-free directory pattern as a directory, since git will not guess', () => {
     const providers = new Map([['specs', { leg: 'specs', stampPath: 'plans/changes' }]]);
-    assert.deepEqual(artifactPaths(providers), ['docs/ideation/', 'openspec/', 'plans/changes/']);
+    assert.deepEqual(paperPaths(providers), ['docs/ideation/', 'openspec/', 'plans/changes/']);
   });
 });
