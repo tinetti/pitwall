@@ -6,10 +6,10 @@ import fs from 'node:fs';
 import {
   currentBranch,
   defaultBranch,
-  findMainWorktree,
   hasRemote,
-  inWorktree,
-  resolveWorktreePath,
+  inBay,
+  mainCheckout,
+  resolveBayPath,
 } from '../src/repo.js';
 import { probeOpenspec } from '../src/openspec.js';
 import {
@@ -26,67 +26,67 @@ import {
 
 after(cleanupAll);
 
-describe('findMainWorktree', () => {
-  it('returns the main worktree from the repository root', () => {
+describe('mainCheckout', () => {
+  it('returns the main checkout from the repository root', () => {
     const repo = createRepo();
-    assert.equal(findMainWorktree(repo), repo);
+    assert.equal(mainCheckout(repo), repo);
   });
 
-  it('returns the main worktree from a subdirectory', () => {
+  it('returns the main checkout from a subdirectory', () => {
     const repo = createRepo();
     const sub = path.join(repo, 'a', 'b');
     fs.mkdirSync(sub, { recursive: true });
-    assert.equal(findMainWorktree(sub), repo);
+    assert.equal(mainCheckout(sub), repo);
   });
 
-  it('returns the main worktree from inside a linked worktree', () => {
+  it('returns the main checkout from inside a bay', () => {
     const repo = createRepo();
     const linked = addWorktree(repo, 'feat/x');
-    assert.equal(findMainWorktree(linked), repo);
+    assert.equal(mainCheckout(linked), repo);
   });
 
   it('works in a repository with zero commits', () => {
     const repo = createRepo({ commit: false });
-    assert.equal(findMainWorktree(repo), repo);
+    assert.equal(mainCheckout(repo), repo);
   });
 
   it('works when the repository path contains a space', () => {
     const repo = createRepo({ name: 'my repo' });
-    assert.equal(findMainWorktree(repo), repo);
+    assert.equal(mainCheckout(repo), repo);
   });
 
   it('throws outside a git repository', () => {
-    assert.throws(() => findMainWorktree(tempRoot()), /not a git repository/i);
+    assert.throws(() => mainCheckout(tempRoot()), /not a git repository/i);
   });
 });
 
-describe('resolveWorktreePath', () => {
-  it('derives a sibling of the main worktree for a plain branch', () => {
+describe('resolveBayPath', () => {
+  it('derives a sibling of the main checkout for a plain branch', () => {
     const repo = createRepo();
-    assert.equal(resolveWorktreePath('plain', repo), path.join(path.dirname(repo), 'repo-plain'));
+    assert.equal(resolveBayPath('plain', repo), path.join(path.dirname(repo), 'repo-plain'));
   });
 
   it('replaces every slash in the branch name', () => {
     const repo = createRepo();
     const dir = path.dirname(repo);
-    assert.equal(resolveWorktreePath('feat/x', repo), path.join(dir, 'repo-feat-x'));
-    assert.equal(resolveWorktreePath('feat/a/b', repo), path.join(dir, 'repo-feat-a-b'));
+    assert.equal(resolveBayPath('feat/x', repo), path.join(dir, 'repo-feat-x'));
+    assert.equal(resolveBayPath('feat/a/b', repo), path.join(dir, 'repo-feat-a-b'));
   });
 
-  it('derives the same path from inside a linked worktree', () => {
+  it('derives the same path from inside a bay', () => {
     const repo = createRepo();
     const linked = addWorktree(repo, 'feat/x');
-    assert.equal(resolveWorktreePath('feat/a/b', linked), path.join(path.dirname(repo), 'repo-feat-a-b'));
+    assert.equal(resolveBayPath('feat/a/b', linked), path.join(path.dirname(repo), 'repo-feat-a-b'));
   });
 
   it('handles a repository path containing a space', () => {
     const repo = createRepo({ name: 'my repo' });
-    assert.equal(resolveWorktreePath('feat/x', repo), path.join(path.dirname(repo), 'my repo-feat-x'));
+    assert.equal(resolveBayPath('feat/x', repo), path.join(path.dirname(repo), 'my repo-feat-x'));
   });
 
   it('works in a repository with zero commits', () => {
     const repo = createRepo({ commit: false, branch: 'ideation/pitwall' });
-    assert.equal(resolveWorktreePath('feat/x', repo), path.join(path.dirname(repo), 'repo-feat-x'));
+    assert.equal(resolveBayPath('feat/x', repo), path.join(path.dirname(repo), 'repo-feat-x'));
   });
 });
 
@@ -146,37 +146,37 @@ describe('defaultBranch', () => {
   });
 });
 
-describe('inWorktree', () => {
-  it('is false in the main worktree', () => {
-    assert.equal(inWorktree(createRepo()), false);
+describe('inBay', () => {
+  it('is false in the main checkout', () => {
+    assert.equal(inBay(createRepo()), false);
   });
 
-  it('is true inside a linked worktree', () => {
+  it('is true inside a bay', () => {
     const repo = createRepo();
-    assert.equal(inWorktree(addWorktree(repo, 'feat/x')), true);
+    assert.equal(inBay(addWorktree(repo, 'feat/x')), true);
   });
 
-  it('is true from a subdirectory of a linked worktree', () => {
+  it('is true from a subdirectory of a bay', () => {
     const repo = createRepo();
     const linked = addWorktree(repo, 'feat/x');
     const sub = path.join(linked, 'nested');
     fs.mkdirSync(sub, { recursive: true });
-    assert.equal(inWorktree(sub), true);
+    assert.equal(inBay(sub), true);
   });
 
   it('is false inside a submodule', () => {
     const root = tempRoot();
     const parent = createRepo({ root, name: 'parent' });
     const child = createRepo({ root, name: 'child' });
-    assert.equal(inWorktree(addSubmodule(parent, child)), false);
+    assert.equal(inBay(addSubmodule(parent, child)), false);
   });
 
   it('is false outside a git repository', () => {
-    assert.equal(inWorktree(tempRoot()), false);
+    assert.equal(inBay(tempRoot()), false);
   });
 
   it('is false in a repository with zero commits', () => {
-    assert.equal(inWorktree(createRepo({ commit: false })), false);
+    assert.equal(inBay(createRepo({ commit: false })), false);
   });
 });
 

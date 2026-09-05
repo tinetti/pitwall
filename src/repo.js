@@ -17,7 +17,7 @@ function tryGit(cwd, args) {
 }
 
 /**
- * Absolute path to the main worktree — the sibling anchor every derived path hangs off.
+ * Absolute path to the main checkout — the sibling anchor every derived path hangs off.
  *
  * Ported from `git-main-worktree` (tinetti_dev_tools/files/zsh/git.zsh:115-117), but the literal
  * `worktree ` prefix is sliced rather than split on whitespace so paths containing spaces survive.
@@ -26,7 +26,7 @@ function tryGit(cwd, args) {
  * @returns {string} absolute path
  * @throws {Error} when `cwd` is not inside a git repository
  */
-export function findMainWorktree(cwd) {
+export function mainCheckout(cwd) {
   const listing = tryGit(cwd, ['worktree', 'list', '--porcelain']);
   const first = listing?.split('\n').find((line) => line.startsWith('worktree '));
   if (!first) throw new Error(`not a git repository: ${cwd}`);
@@ -34,15 +34,15 @@ export function findMainWorktree(cwd) {
 }
 
 /**
- * Where a branch's worktree lives: a sibling of the main worktree, suffixed with the branch name
+ * Where a branch's bay lives: a sibling of the main checkout, suffixed with the branch name
  * and every `/` flattened to `-`. Ports the `gwt` convention (git.zsh:267-288).
  *
  * @param {string} branch
  * @param {string} cwd
  * @returns {string} absolute path
  */
-export function resolveWorktreePath(branch, cwd) {
-  const main = findMainWorktree(cwd);
+export function resolveBayPath(branch, cwd) {
+  const main = mainCheckout(cwd);
   return path.join(path.dirname(main), `${path.basename(main)}-${branch.replace(/\//g, '-')}`);
 }
 
@@ -71,7 +71,7 @@ export function hasRemote(cwd) {
 
 /**
  * The branch new work forks from: `origin/HEAD` when the remote publishes one, otherwise the
- * current branch. Never fetches — fetching is a side effect belonging to the worktree command,
+ * current branch. Never fetches — fetching is a side effect belonging to the bay command,
  * not to a query inference calls repeatedly.
  *
  * @param {string} cwd
@@ -107,15 +107,15 @@ export function superprojectRoot(cwd) {
 }
 
 /**
- * True when `cwd` sits in a linked worktree rather than the main one.
+ * True when `cwd` sits in a bay — a linked git worktree — rather than in the main checkout.
  *
  * A submodule also has a git-dir distinct from its superproject's, so the superproject check comes
- * first — otherwise a submodule would anchor worktree paths to the wrong repository.
+ * first — otherwise a submodule would anchor bay paths to the wrong repository.
  *
  * @param {string} cwd
  * @returns {boolean}
  */
-export function inWorktree(cwd) {
+export function inBay(cwd) {
   const superproject = tryGit(cwd, ['rev-parse', '--show-superproject-working-tree']);
   if (superproject === null || superproject !== '') return false;
 
@@ -126,16 +126,16 @@ export function inWorktree(cwd) {
 }
 
 /**
- * The working tree root of `cwd` — the *linked* worktree's own root when inside one.
+ * The working tree root of `cwd` — the bay's own root when inside one.
  *
- * This is not interchangeable with {@link findMainWorktree}: detectors resolve their globs against
- * the tree the operator is actually editing, while the main worktree is only the anchor derived
+ * This is not interchangeable with {@link mainCheckout}: detectors resolve their globs against
+ * the tree the operator is actually editing, while the main checkout is only the anchor derived
  * paths hang off.
  *
  * @param {string} cwd
  * @returns {string|null} absolute path, or `null` outside a repository
  */
-export function worktreeRoot(cwd) {
+export function checkoutRoot(cwd) {
   return tryGit(cwd, ['rev-parse', '--show-toplevel']);
 }
 

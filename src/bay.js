@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-import { defaultBranch, hasRemote, resolveWorktreePath } from './repo.js';
+import { defaultBranch, hasRemote, resolveBayPath } from './repo.js';
 
 /**
  * @typedef {{path:string, created:boolean, branchCreated:boolean, base:string|null}} StartResult
  *   `base` is the ref the branch was cut from, and `null` whenever nothing was cut — a no-op, an
- *   existing worktree, or a branch that already existed. Naming a base in those cases would be an
+ *   existing bay, or a branch that already existed. Naming a base in those cases would be an
  *   invention: no ref was chosen, and the caller would have no way to tell the difference.
  */
 
@@ -16,16 +16,16 @@ import { defaultBranch, hasRemote, resolveWorktreePath } from './repo.js';
  *
  * This module is the first in `src/` that mutates the repository, and neither existing error tier
  * fits it: queries never throw because "I do not know" is a legitimate answer, and loaders throw
- * `file:line:` because a malformed manifest is a programming error. A worktree that could not be
+ * `file:line:` because a malformed manifest is a programming error. A bay that could not be
  * created is neither — it is a real failure with a real remedy, and the CLI is still the only layer
  * allowed to write to a stream or choose an exit code. Every message here therefore states what
  * failed and then, after an em dash, what to do about it.
  */
-export class WorktreeError extends Error {
+export class BayError extends Error {
   /** @param {string} message */
   constructor(message) {
     super(message);
-    this.name = 'WorktreeError';
+    this.name = 'BayError';
   }
 }
 
@@ -123,12 +123,12 @@ export function isInside(target, cwd) {
  * @param {string} cwd
  * @param {string} [requested] an explicit base from the caller
  * @returns {string}
- * @throws {WorktreeError} when no base can be established
+ * @throws {BayError} when no base can be established
  */
 function resolveBase(cwd, requested) {
   if (requested !== undefined) {
     if (!resolves(cwd, requested)) {
-      throw new WorktreeError(
+      throw new BayError(
         `base ref \`${requested}\` does not resolve to a commit — fetch it first, or name one that exists`,
       );
     }
@@ -144,7 +144,7 @@ function resolveBase(cwd, requested) {
   const name = defaultBranch(cwd);
   const base = name === null ? null : `origin/${name}`;
   if (base === null || !resolves(cwd, base)) {
-    throw new WorktreeError(
+    throw new BayError(
       "cannot determine origin's default branch — run `git remote set-head origin -a`, " +
         'or pass an explicit base ref',
     );
@@ -162,12 +162,12 @@ function resolves(cwd, ref) {
 }
 
 /**
- * Create `branch` and its worktree at the `gwt` convention path, and report where it is.
+ * Create `branch` and its bay at the `gwt` convention path, and report where it is.
  *
  * A port of `gwt` (tinetti_dev_tools/files/zsh/git.zsh:265-289) with the three properties a shell
  * function invoked by hand never needed: it is idempotent, it is a no-op from inside the target,
  * and it works in a repository with no remote. The path derivation is not re-done here — inference
- * needs the same convention, so it lives in {@link resolveWorktreePath} and is consumed.
+ * needs the same convention, so it lives in {@link resolveBayPath} and is consumed.
  *
  * The one thing deliberately *not* ported is `gwt`'s trailing `cd`: a tool-invoked shell cannot
  * change the operator's directory, so the path is returned and the CLI prints it instead.
@@ -175,27 +175,27 @@ function resolves(cwd, ref) {
  * @param {string} branch
  * @param {{cwd:string, base?:string}} opts
  * @returns {StartResult}
- * @throws {WorktreeError} on every failure, each carrying its own remedy
+ * @throws {BayError} on every failure, each carrying its own remedy
  */
-export function startWorktree(branch, opts) {
+export function startBay(branch, opts) {
   const { cwd } = opts;
 
   if (!branch || branch.trim() === '') {
-    throw new WorktreeError('no branch name given — name the branch to start, for example `feat/thing`');
+    throw new BayError('no branch name given — name the branch to start, for example `feat/thing`');
   }
   // Checked before anything is resolved or mutated: this rejects `feat/x y`, `feat/..x` and
   // flag-shaped names alike, so nothing operator-supplied ever reaches `git worktree add`'s parser.
   if (!git(cwd, ['check-ref-format', '--branch', branch]).ok) {
-    throw new WorktreeError(
+    throw new BayError(
       `\`${branch}\` is not a valid branch name — git will not accept it; try one like \`feat/thing\``,
     );
   }
 
   let target;
   try {
-    target = resolveWorktreePath(branch, cwd);
+    target = resolveBayPath(branch, cwd);
   } catch {
-    throw new WorktreeError(`${cwd} is not inside a git repository — run this from a repository checkout`);
+    throw new BayError(`${cwd} is not inside a git repository — run this from a repository checkout`);
   }
 
   // The operator ran it twice, or ran it where they already are. Neither is a mistake worth
@@ -206,14 +206,14 @@ export function startWorktree(branch, opts) {
   const here = registered.find((record) => record.path === target);
   if (here) {
     if (here.prunable || !fs.existsSync(target)) {
-      throw new WorktreeError(
+      throw new BayError(
         `${target} is registered as a worktree but is not on disk — run \`git worktree prune\` and try again`,
       );
     }
     return { path: target, created: false, branchCreated: false, base: null };
   }
   if (fs.existsSync(target)) {
-    throw new WorktreeError(
+    throw new BayError(
       `${target} already exists and is not a worktree — move or remove it, then start the branch again`,
     );
   }
@@ -222,7 +222,7 @@ export function startWorktree(branch, opts) {
   // and asking for its worktree. git's own message names the path but not the way out.
   const elsewhere = registered.find((record) => record.branch === branch);
   if (elsewhere) {
-    throw new WorktreeError(
+    throw new BayError(
       `\`${branch}\` is already checked out at ${elsewhere.path} — switch that checkout to another ` +
         'branch first, or start a differently named branch',
     );
@@ -231,7 +231,7 @@ export function startWorktree(branch, opts) {
   // Positive pre-check rather than a reliance on git failing: given no base ref, `git worktree add`
   // infers `--orphan` on an unborn HEAD and *succeeds*, leaving a worktree with no history at all.
   if (!git(cwd, ['rev-parse', '--quiet', '--verify', 'HEAD']).ok) {
-    throw new WorktreeError(
+    throw new BayError(
       'this repository has no commits yet — make an initial commit first, then start the worktree',
     );
   }
@@ -245,7 +245,7 @@ export function startWorktree(branch, opts) {
     ? git(cwd, ['worktree', 'add', target, branch])
     : git(cwd, ['worktree', 'add', '--no-track', '-b', branch, target, base]);
   if (!added.ok) {
-    throw new WorktreeError(`could not create the worktree at ${target} — git said: ${firstLine(added.stderr)}`);
+    throw new BayError(`could not create the worktree at ${target} — git said: ${firstLine(added.stderr)}`);
   }
 
   return { path: target, created: true, branchCreated: !branchExists, base };

@@ -6,8 +6,8 @@ import { renderBaton, renderPosition } from './baton.js';
 import { BUILTIN_BOOKINGS, resolveLeg } from './inference.js';
 import { artifactPaths, checkIgnored } from './preflight.js';
 import { loadBookings } from './bookings.js';
-import { superprojectRoot, worktreeRoot } from './repo.js';
-import { WorktreeError, isInside, startWorktree } from './worktree.js';
+import { checkoutRoot, superprojectRoot } from './repo.js';
+import { BayError, isInside, startBay } from './bay.js';
 
 const USAGE = [
   'Usage: pw <command> [options]',
@@ -45,7 +45,7 @@ const INDENT = '  ';
  * @returns {string|null} absolute path to the working tree root
  */
 function repoRoot(cwd, io) {
-  const root = worktreeRoot(superprojectRoot(cwd) ?? cwd);
+  const root = checkoutRoot(superprojectRoot(cwd) ?? cwd);
   if (root === null) {
     io.err(`pitwall: ${cwd} is not inside a git repository — run pw from a repository checkout\n`);
     return null;
@@ -144,14 +144,14 @@ function start(cwd, args, io) {
   const root = repoRoot(cwd, io);
   if (root === null) return 2;
 
-  /** @type {import('./worktree.js').StartResult} */
+  /** @type {import('./bay.js').StartResult} */
   let result;
   try {
-    result = startWorktree(branch, { cwd: root });
+    result = startBay(branch, { cwd: root });
   } catch (error) {
     // Only this module's own failures are operator-facing; anything else is a bug and must not be
     // dressed up as advice.
-    if (!(error instanceof WorktreeError)) throw error;
+    if (!(error instanceof BayError)) throw error;
     io.err(`pitwall: ${error.message}\n`);
     return 2;
   }

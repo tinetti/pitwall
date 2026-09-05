@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { inWorktree, isMerged, resolveWorktreePath } from './repo.js';
+import { inBay, isMerged, resolveBayPath } from './repo.js';
 
 /**
  * @typedef {{id:string, owner:'provider'|'wrapper', progress?:boolean}} Leg
@@ -41,7 +41,7 @@ export const LEGS = [
 function bayPath(state) {
   if (!state.branch) return null;
   try {
-    return resolveWorktreePath(state.branch, state.cwd);
+    return resolveBayPath(state.branch, state.cwd);
   } catch {
     return null;
   }
@@ -55,7 +55,7 @@ function bayPath(state) {
  * @returns {boolean}
  */
 export function bayIsDone(state) {
-  if (inWorktree(state.cwd)) return true;
+  if (inBay(state.cwd)) return true;
   const target = bayPath(state);
   return target !== null && fs.existsSync(target);
 }

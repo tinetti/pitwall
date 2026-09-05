@@ -11,5 +11,5 @@ happens in the new tree. Pass the branch name as the argument (`feat/<short-name
 `cd` line the command prints: a tool-invoked shell cannot change your directory for you.
 
 This beat's `doneWhenCmd` never succeeds on purpose, exactly as the ideate beat's does not: Pitwall
-detects the worktree from repository state — `git worktree list` and the naming convention — never
+detects the bay from repository state — `git worktree list` and the naming convention — never
 from a manifest. This one exists to supply the baton: the command, the model, and this text.

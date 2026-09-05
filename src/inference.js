@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LEGS, cleanupIsDone, ideateIsDone, bayIsDone } from './legs.js';
 import { evaluateBooking, loadBookings } from './bookings.js';
-import { currentBranch, defaultBranch, superprojectRoot, worktreeRoot } from './repo.js';
+import { checkoutRoot, currentBranch, defaultBranch, superprojectRoot } from './repo.js';
 import { discoverChangeId, executeProgress } from './progress.js';
 
 /**
@@ -70,7 +70,7 @@ export function resolveLeg(cwd, providers) {
   }
   const anchor = superproject ?? cwd;
 
-  const root = worktreeRoot(anchor);
+  const root = checkoutRoot(anchor);
   if (root === null) {
     warnings.push(`not a git repository: ${cwd}`);
     return {
