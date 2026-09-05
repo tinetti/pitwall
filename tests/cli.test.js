@@ -42,7 +42,7 @@ function isolated(fn) {
 }
 
 /**
- * Drive `run` exactly the way phase 5's `bin/pw` will — argv after the program name, both streams
+ * Drive `run` exactly the way phase 5's `bin/waybill` will — argv after the program name, both streams
  * injected — so this suite covers the same entry point the wrapper will call rather than a subshell.
  *
  * The real `openspec` binary is removed from `PATH` for the same reason `tests/waybill.test.js`
@@ -72,7 +72,7 @@ function cli(argv, cwd) {
   return { code, out, err };
 }
 
-describe('pw next', () => {
+describe('waybill next', () => {
   it('prints the waybill for the leg the repository is actually on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['next'], fixture.dir);
@@ -92,7 +92,7 @@ describe('pw next', () => {
     assert.match(result.out, /leg 5 of 7 \(specs\)/);
   });
 
-  it('reports ignored artifacts from a subdirectory — the preflight runs at the repository root', () => {
+  it('reports ignored artifacts from a subdirectory — the inspection runs at the repository root', () => {
     // The load-bearing case: `git check-ignore` resolves its arguments against the process
     // directory, so running it in `src/nested` would match nothing and the block would vanish
     // exactly when the operator most needs it. Running from the root is what makes it appear.
@@ -102,7 +102,7 @@ describe('pw next', () => {
     fs.mkdirSync(sub, { recursive: true });
 
     const result = cli(['next'], sub);
-    assert.equal(result.code, 0, 'the preflight is advice; it never changes the exit code');
+    assert.equal(result.code, 0, 'the inspection is advice; it never changes the exit code');
     assert.match(result.out, /^IGNORED BY GIT:$/m);
     assert.match(result.out, /openspec\/ — papers written here will never be committed/);
   });
@@ -142,11 +142,11 @@ describe('pw next', () => {
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown option `--jsonn`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });
 
-describe('pw status', () => {
+describe('waybill status', () => {
   it('prints the position for the leg the repository is on, and exits 0', () => {
     const fixture = specsFixture();
     const result = cli(['status'], fixture.dir);
@@ -189,11 +189,11 @@ describe('pw status', () => {
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown option `--json`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });
 
-describe('pw start', () => {
+describe('waybill start', () => {
   it('creates the bay, names the cd target, and hands off the leg that follows', () => {
     const repo = createRepo({ remote: true, originHead: true });
 
@@ -241,7 +241,7 @@ describe('pw start', () => {
 
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 
   it('rejects an option and a second positional rather than guessing which is the branch', () => {
@@ -276,20 +276,20 @@ describe('pw start', () => {
   });
 });
 
-describe('pw argument parsing', () => {
+describe('waybill argument parsing', () => {
   it('answers --help after the subcommand, not only before it', () => {
     const result = cli(['next', '--help'], specsFixture().dir);
 
     assert.equal(result.code, 0);
     assert.equal(result.err, '');
-    assert.match(result.out, /Usage: pw <command> \[options\]/);
+    assert.match(result.out, /Usage: waybill <command> \[options\]/);
     assert.equal(result.out.includes('NEXT:'), false, 'a waybill was rendered instead of usage');
   });
 
   it('answers --help before the subcommand too', () => {
     const result = cli(['--help'], tempRoot());
     assert.equal(result.code, 0);
-    assert.match(result.out, /Usage: pw <command> \[options\]/);
+    assert.match(result.out, /Usage: waybill <command> \[options\]/);
   });
 
   it('exits 2 on an unknown command', () => {
@@ -298,7 +298,7 @@ describe('pw argument parsing', () => {
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
     assert.match(result.err, /unknown command `bogus`/);
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 
   it('exits 2 with usage on stderr when given no command at all', () => {
@@ -306,6 +306,6 @@ describe('pw argument parsing', () => {
 
     assert.equal(result.code, 2);
     assert.equal(result.out, '');
-    assert.match(result.err, /Usage: pw/);
+    assert.match(result.err, /Usage: waybill/);
   });
 });

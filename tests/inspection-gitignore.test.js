@@ -77,7 +77,7 @@ describe('checkIgnored', () => {
   });
 
   it('matches a directory-only pattern against a directory that does not exist yet', () => {
-    // The whole point of the preflight: the artifact is one the workflow has not written. Git only
+    // The whole point of the inspection: the artifact is one the workflow has not written. Git only
     // matches `/openspec/` against a nonexistent path when the query itself carries the slash, so
     // this asserts the trailing slash survives all the way to the subprocess.
     const dir = repoIgnoring('/openspec/\n');

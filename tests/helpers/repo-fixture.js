@@ -10,10 +10,10 @@ const GIT_ENV = {
   ...process.env,
   GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_CONFIG_SYSTEM: '/dev/null',
-  GIT_AUTHOR_NAME: 'Pitwall Fixture',
-  GIT_AUTHOR_EMAIL: 'fixture@pitwall.test',
-  GIT_COMMITTER_NAME: 'Pitwall Fixture',
-  GIT_COMMITTER_EMAIL: 'fixture@pitwall.test',
+  GIT_AUTHOR_NAME: 'Waybill Fixture',
+  GIT_AUTHOR_EMAIL: 'fixture@waybill.test',
+  GIT_COMMITTER_NAME: 'Waybill Fixture',
+  GIT_COMMITTER_EMAIL: 'fixture@waybill.test',
 };
 
 /**
@@ -39,7 +39,7 @@ export function git(cwd, args) {
  * @returns {string}
  */
 export function tempRoot() {
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'pitwall-')));
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'waybill-')));
   roots.push(root);
   return root;
 }

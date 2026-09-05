@@ -67,8 +67,8 @@ function state(overrides = {}) {
       body: '',
       path: '/bookings/openspec-specs.md',
     },
-    branch: 'feat/session-handoff',
-    changeId: 'add-session-handoff',
+    branch: 'feat/session-handover',
+    changeId: 'add-session-handover',
     warnings: [],
     ...overrides,
   };
@@ -91,7 +91,7 @@ describe('renderWaybill golden output', () => {
     });
   }
 
-  it('renders the same leg as a position, which is what `pw status` prints', () => {
+  it('renders the same leg as a position, which is what `waybill status` prints', () => {
     assertGolden('status', renderPosition(resolve(specsFixture().dir), CLEAN));
   });
 
@@ -116,7 +116,7 @@ describe('renderWaybill header and leg strip', () => {
   it('names the branch, the position, and the current leg', () => {
     assert.equal(
       renderWaybill(state(), CLEAN).split('\n')[0],
-      `feat/session-handoff · leg 5 of ${LEGS.length} (specs)`,
+      `feat/session-handover · leg 5 of ${LEGS.length} (specs)`,
     );
   });
 
@@ -145,7 +145,7 @@ describe('renderWaybill header and leg strip', () => {
       state({ leg: null, index: 7, completed: LEGS.map((leg) => leg.id), booking: undefined }),
       CLEAN,
     );
-    assert.equal(output.split('\n')[0], `feat/session-handoff · all ${LEGS.length} legs complete`);
+    assert.equal(output.split('\n')[0], `feat/session-handover · all ${LEGS.length} legs complete`);
     assert.equal(output.includes('▶'), false);
     assert.match(output, /NEXT:\n {2}nothing to hand off/);
   });
@@ -191,7 +191,7 @@ describe('renderWaybill NEXT block', () => {
     renderWaybill(state({ ...rest, booking: { ...state().booking, ...booking } }), CLEAN);
 
   it('interpolates the command and the change id', () => {
-    assert.match(next({}), /^ {2}\/spec:propose add-session-handoff$/m);
+    assert.match(next({}), /^ {2}\/spec:propose add-session-handover$/m);
   });
 
   it('omits the argument when no change has been scaffolded yet', () => {
@@ -201,13 +201,13 @@ describe('renderWaybill NEXT block', () => {
   it('takes the branch instead when the booking asks for it', () => {
     // The cleanup leg's target finishes a *branch*; handing it a change id would name the wrong
     // thing entirely, and both facts are on the inference already.
-    assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/session-handoff$/m);
+    assert.match(next({ command: '/mar', argument: 'branch' }), /^ {2}\/mar feat\/session-handover$/m);
   });
 
   it('interpolates nothing at all when the booking asks for no argument', () => {
     const output = next({ command: 'superpowers:some-skill', argument: 'none' });
     assert.match(output, /^ {2}superpowers:some-skill$/m);
-    assert.equal(output.includes('add-session-handoff'), false);
+    assert.equal(output.includes('add-session-handover'), false);
   });
 
   it('omits a requested argument the repository cannot supply', () => {
@@ -268,14 +268,14 @@ describe('renderPosition', () => {
     assert.equal(output.includes('/spec:propose'), false);
   });
 
-  it('keeps the preflight and the warnings, which are position facts rather than waybill facts', () => {
+  it('keeps the inspection and the warnings, which are position facts rather than waybill facts', () => {
     const output = renderPosition(state({ warnings: ['inference said so'] }), {
       ignored: ['openspec/'],
-      warnings: ['preflight said so'],
+      warnings: ['inspection said so'],
     });
     assert.match(output, /^IGNORED BY GIT:$/m);
     assert.match(output, /inference said so/);
-    assert.match(output, /preflight said so/);
+    assert.match(output, /inspection said so/);
   });
 
   it('still answers when the walk fell off the end, with no waybill to fall back on', () => {
@@ -312,13 +312,13 @@ describe('renderWaybill reports what it could not do', () => {
     assert.match(output, /openspec-specs\.md/);
   });
 
-  it('reports a preflight that could not answer alongside the inference warnings', () => {
+  it('reports an inspection that could not answer alongside the inference warnings', () => {
     const output = renderWaybill(state({ warnings: ['inference said so'] }), {
       ignored: [],
-      warnings: ['preflight said so'],
+      warnings: ['inspection said so'],
     });
     assert.match(output, /inference said so/);
-    assert.match(output, /preflight said so/);
+    assert.match(output, /inspection said so/);
   });
 
   it('always ends with exactly one trailing newline', () => {

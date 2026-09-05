@@ -85,7 +85,7 @@ describe('resolveBayPath', () => {
   });
 
   it('works in a repository with zero commits', () => {
-    const repo = createRepo({ commit: false, branch: 'ideation/pitwall' });
+    const repo = createRepo({ commit: false, branch: 'ideation/waybill' });
     assert.equal(resolveBayPath('feat/x', repo), path.join(path.dirname(repo), 'repo-feat-x'));
   });
 });
@@ -96,7 +96,7 @@ describe('currentBranch', () => {
   });
 
   it('reports the branch of a repository with zero commits', () => {
-    assert.equal(currentBranch(createRepo({ commit: false, branch: 'ideation/pitwall' })), 'ideation/pitwall');
+    assert.equal(currentBranch(createRepo({ commit: false, branch: 'ideation/waybill' })), 'ideation/waybill');
   });
 
   it('returns null on a detached HEAD', () => {

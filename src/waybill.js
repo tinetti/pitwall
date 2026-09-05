@@ -21,7 +21,8 @@ const DEFAULT_HANDOVER = 'run:';
  * booking whose `argument` reads `constructor` would find a function on a plain object's prototype
  * and be called with the resolved state. `loadBookings` rejects that key today, so this is depth
  * rather than a live bug — but the renderer is also reachable with hand-built bookings from tests
- * and from `pw start`, and a lookup table should not depend on its only caller validating for it.
+ * and from `waybill start`, and a lookup table should not depend on its only caller validating for
+ * it.
  */
 const ARGUMENT_SOURCES = new Map([
   ['change-id', (state) => state.changeId],
@@ -135,19 +136,19 @@ function nextBlock(state) {
 /**
  * Everything both surfaces say about the repository, appended to whatever `sections` they lead
  * with. The inspection findings and the warnings are facts about where the docket stands, not about
- * the handover, so `pw status` reports them exactly as `pw next` does.
+ * the handover, so `waybill status` reports them exactly as `waybill next` does.
  *
  * @param {string[]} sections
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Inspection} preflight
+ * @param {import('./inspection.js').Inspection} inspection
  * @returns {string} ends with exactly one newline
  */
-function withFindings(sections, state, preflight) {
-  if (preflight.ignored.length > 0) {
+function withFindings(sections, state, inspection) {
+  if (inspection.ignored.length > 0) {
     sections.push(
       [
         'IGNORED BY GIT:',
-        ...preflight.ignored.map(
+        ...inspection.ignored.map(
           (query) => `${INDENT}⚠ ${query} — papers written here will never be committed`,
         ),
       ].join('\n'),
@@ -156,7 +157,7 @@ function withFindings(sections, state, preflight) {
 
   // Last, and never suppressed: a leg that silently repeats forever is the worst failure this tool
   // has, and the warning naming the booking is the only thing that explains it.
-  const warnings = [...state.warnings, ...(preflight.warnings ?? [])];
+  const warnings = [...state.warnings, ...(inspection.warnings ?? [])];
   if (warnings.length > 0) {
     sections.push(['WARNINGS:', ...warnings.map((text) => `${INDENT}⚠ ${text}`)].join('\n'));
   }
@@ -167,21 +168,21 @@ function withFindings(sections, state, preflight) {
 /**
  * The whole product in one string: where this repository stands, and what the next session runs.
  *
- * Pure by design — no filesystem, no subprocess, no clock. `pw start` prints this same block after
- * creating a bay, and a renderer that went looking for its own inputs could not be reused
+ * Pure by design — no filesystem, no subprocess, no clock. `waybill start` prints this same block
+ * after creating a bay, and a renderer that went looking for its own inputs could not be reused
  * there.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Inspection} [preflight]
+ * @param {import('./inspection.js').Inspection} [inspection]
  * @returns {string} ends with exactly one newline
  */
-export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) {
+export function renderWaybill(state, inspection = { ignored: [], warnings: [] }) {
   const position = [header(state), ...strip(state)].join('\n');
-  return withFindings([position, nextBlock(state).join('\n')], state, preflight);
+  return withFindings([position, nextBlock(state).join('\n')], state, inspection);
 }
 
 /**
- * Where the docket stands, without a waybill, for `pw status`.
+ * Where the docket stands, without a waybill, for `waybill status`.
  *
  * The NEXT block is the one thing left out, and leaving it out is the point: re-issuing an
  * instruction to an operator who has already acted on it invites it to be run twice. Sharing
@@ -189,10 +190,10 @@ export function renderWaybill(state, preflight = { ignored: [], warnings: [] }) 
  * about where the same repository stands.
  *
  * @param {import('./inference.js').Inference} state
- * @param {import('./inspection.js').Inspection} [preflight]
+ * @param {import('./inspection.js').Inspection} [inspection]
  * @returns {string} ends with exactly one newline
  */
-export function renderPosition(state, preflight = { ignored: [], warnings: [] }) {
+export function renderPosition(state, inspection = { ignored: [], warnings: [] }) {
   const position = [header(state), ...strip(state)].join('\n');
-  return withFindings([position], state, preflight);
+  return withFindings([position], state, inspection);
 }

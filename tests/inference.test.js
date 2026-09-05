@@ -264,7 +264,7 @@ describe('resolveLeg', () => {
         'leg: specs',
         'command: /spec:propose',
         'model: placeholder',
-        'stampCmd: pitwall-no-such-binary-xyz',
+        'stampCmd: waybill-no-such-binary-xyz',
         '---',
         '',
       ].join('\n'),
@@ -273,7 +273,7 @@ describe('resolveLeg', () => {
     const result = resolve(specsFixture().dir, bookings);
     assert.equal(result.warnings.length, 1);
     assert.match(result.warnings[0], /broken-specs\.md/);
-    assert.match(result.warnings[0], /pitwall-no-such-binary-xyz/);
+    assert.match(result.warnings[0], /waybill-no-such-binary-xyz/);
     assert.equal(result.completed.includes('specs'), false);
   });
 

@@ -10,7 +10,7 @@ import { checkoutRoot, superprojectRoot } from './repo.js';
 import { BayError, isInside, startBay } from './bay.js';
 
 const USAGE = [
-  'Usage: pw <command> [options]',
+  'Usage: waybill <command> [options]',
   '',
   'Commands:',
   '  next            Where this docket stands, and the waybill for the next leg',
@@ -47,14 +47,16 @@ const INDENT = '  ';
 function repoRoot(cwd, io) {
   const root = checkoutRoot(superprojectRoot(cwd) ?? cwd);
   if (root === null) {
-    io.err(`waybill: ${cwd} is not inside a git repository — run pw from a repository checkout\n`);
+    io.err(
+      `waybill: ${cwd} is not inside a git repository — run waybill from a repository checkout\n`,
+    );
     return null;
   }
   return root;
 }
 
 /**
- * `pw next` — resolve the leg, check the paper paths, print one waybill.
+ * `waybill next` — resolve the leg, check the paper paths, print one waybill.
  *
  * Exit 0 whenever a leg resolved, inspection findings included: the inspection is advice and the
  * waybill is the product. Exit 2 is reserved for "there is nothing here to answer about".
@@ -87,7 +89,7 @@ function next(cwd, args, io) {
 }
 
 /**
- * `pw status` — the same last stamp `next` reports, with the handover left out.
+ * `waybill status` — the same last stamp `next` reports, with the handover left out.
  *
  * Deliberately takes no options at all, `--json` included. `next --json` already prints the whole
  * resolved state, and a second machine-readable surface would be a second thing to keep in step
@@ -116,7 +118,7 @@ function status(cwd, args, io) {
 }
 
 /**
- * `pw start <branch>` — cut the branch and its bay, then hand off the leg that follows.
+ * `waybill start <branch>` — cut the branch and its bay, then hand off the leg that follows.
  *
  * Leaving the operator at a bare success message would recreate the exact gap Waybill exists to
  * close, so the waybill is printed here too. It is resolved from the *new* bay rather than from
@@ -183,7 +185,7 @@ const COMMANDS = new Map([
 ]);
 
 /**
- * Argument parsing lives here and only here: `bin/pw` is a wrapper around this function, and a
+ * Argument parsing lives here and only here: `bin/waybill` is a wrapper around this function, and a
  * second parser in the wrapper would drift from it.
  *
  * @param {string[]} [argv] arguments after the program name
@@ -196,8 +198,8 @@ export function run(argv = [], options = {}) {
   const cwd = options.cwd ?? process.cwd();
   const [name, ...args] = argv;
 
-  // Help is answered wherever it appears, not only as the first word: `pw next --help` is what an
-  // operator types, and rendering a waybill in reply would be an answer to a different question.
+  // Help is answered wherever it appears, not only as the first word: `waybill next --help` is what
+  // an operator types, and rendering a waybill in reply would be an answer to a different question.
   if (argv.includes('--help') || argv.includes('-h')) {
     out(`${USAGE}\n`);
     return 0;

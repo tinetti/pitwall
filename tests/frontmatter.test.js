@@ -26,13 +26,13 @@ describe('parseFrontmatter — accepted syntax', () => {
     assert.equal(meta.stampPath, 'docs/ideation/*/contract-data.json');
   });
 
-  it('accepts a manifest with zero keys', () => {
+  it('accepts a booking with zero keys', () => {
     const { meta, body } = parseFrontmatter('---\n---\nbody\n');
     assert.deepEqual(meta, {});
     assert.equal(body, 'body\n');
   });
 
-  it('accepts a manifest with one key and an empty body', () => {
+  it('accepts a booking with one key and an empty body', () => {
     const { meta, body } = parseFrontmatter('---\nstage: specs\n---\n');
     assert.deepEqual(meta, { stage: 'specs' });
     assert.equal(body, '');
@@ -57,8 +57,8 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('keeps an empty value as an empty string', () => {
-    const { meta } = parseFrontmatter('---\nhandoff:\n---\n');
-    assert.deepEqual(meta, { handoff: '' });
+    const { meta } = parseFrontmatter('---\nhandover:\n---\n');
+    assert.deepEqual(meta, { handover: '' });
   });
 
   it('strips quotes only when they wrap the entire value', () => {
@@ -78,9 +78,9 @@ describe('parseFrontmatter — accepted syntax', () => {
   });
 
   it('does not coerce numbers or booleans', () => {
-    const { meta } = parseFrontmatter('---\neffort: 3\nhandoff: true\n---\n');
+    const { meta } = parseFrontmatter('---\neffort: 3\nhandover: true\n---\n');
     assert.equal(meta.effort, '3');
-    assert.equal(meta.handoff, 'true');
+    assert.equal(meta.handover, 'true');
   });
 });
 

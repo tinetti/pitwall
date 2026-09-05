@@ -132,7 +132,7 @@ describe('stampedByPath', () => {
 
   it('matches an unquoted glob segment', () => {
     const root = tempRoot();
-    writeFile(path.join(root, 'docs', 'ideation', 'pitwall', 'contract-data.json'), '{}');
+    writeFile(path.join(root, 'docs', 'ideation', 'waybill', 'contract-data.json'), '{}');
     assert.equal(stampedByPath('docs/ideation/*/contract-data.json', root), true);
     assert.equal(stampedByPath('docs/ideation/*/nothing.json', root), false);
   });
@@ -165,7 +165,7 @@ describe('stampedByCmd', () => {
   });
 
   it('is false — never thrown — when the command does not exist (exit 127)', () => {
-    assert.equal(stampedByCmd('pitwall-no-such-binary-xyz', tempRoot()), false);
+    assert.equal(stampedByCmd('waybill-no-such-binary-xyz', tempRoot()), false);
   });
 
   it('runs in the given cwd and ignores stdout', () => {
@@ -177,7 +177,7 @@ describe('stampedByCmd', () => {
 
 describe('bookingIsDone', () => {
   const root = tempRoot();
-  writeFile(path.join(root, 'docs', 'ideation', 'pitwall', 'contract-data.json'), '{}');
+  writeFile(path.join(root, 'docs', 'ideation', 'waybill', 'contract-data.json'), '{}');
 
   it('uses the path stamp alone when it is the only one', () => {
     assert.equal(bookingIsDone({ stampPath: 'docs/ideation/*/contract-data.json' }, root), true);

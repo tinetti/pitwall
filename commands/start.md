@@ -1,6 +1,6 @@
 ---
 description: "Waybill — cut the branch and its bay, then hand off the next leg"
-argument-hint: <branch — the branch to start, e.g. feat/session-handoff>
+argument-hint: <branch — the branch to start, e.g. feat/session-handover>
 allowed-tools: Bash(node:*), Bash(test:*), Bash(echo:*)
 ---
 

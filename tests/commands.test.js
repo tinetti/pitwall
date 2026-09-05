@@ -132,7 +132,7 @@ describe('the shipped command set', () => {
 
   it('rejects a command file that lost its frontmatter fences entirely', () => {
     const dir = scratch();
-    writeFile(path.join(dir, 'status.md'), '# Pitwall: status\n\nno frontmatter here\n');
+    writeFile(path.join(dir, 'status.md'), '# Waybill: status\n\nno frontmatter here\n');
 
     assert.deepEqual(problems(dir, DECLARED), ['status.md: frontmatter names no description']);
   });
@@ -169,7 +169,7 @@ describe('the shipped command set', () => {
 describe('the plugin manifest', () => {
   it('is valid JSON naming the plugin', () => {
     const plugin = readJson('.claude-plugin/plugin.json');
-    assert.equal(plugin.name, 'pitwall');
+    assert.equal(plugin.name, 'waybill');
     assert.ok(plugin.description, 'plugin.json has no description');
     assert.ok(Array.isArray(plugin.keywords) && plugin.keywords.length > 0);
   });
@@ -257,27 +257,28 @@ describe('criterion 7: zero dependencies and no build step', () => {
     assert.equal((pkg.scripts ?? {}).build, undefined);
   });
 
-  it('points `pw` at an executable shim that exists', () => {
-    assert.equal(pkg.bin.pw, 'bin/pw');
-    const shim = path.join(ROOT, pkg.bin.pw);
+  it('points both bin names at one executable shim that exists', () => {
+    assert.equal(pkg.bin.waybill, 'bin/waybill');
+    assert.equal(pkg.bin.wyb, 'bin/waybill');
+    const shim = path.join(ROOT, pkg.bin.waybill);
     assert.equal(fs.existsSync(shim), true);
-    assert.notEqual(fs.statSync(shim).mode & 0o111, 0, 'bin/pw is not executable');
+    assert.notEqual(fs.statSync(shim).mode & 0o111, 0, 'bin/waybill is not executable');
   });
 
   it('keeps argument parsing out of the shim, so it cannot drift from the CLI', () => {
-    const shim = fs.readFileSync(path.join(ROOT, 'bin', 'pw'), 'utf8');
+    const shim = fs.readFileSync(path.join(ROOT, 'bin', 'waybill'), 'utf8');
     assert.match(shim, /^#!\/usr\/bin\/env node$/m);
     assert.match(shim, /run\(process\.argv\.slice\(2\)\)/);
   });
 
-  it('actually runs: `pw --help` exits 0 and prints the usage banner', () => {
+  it('actually runs: `waybill --help` exits 0 and prints the usage banner', () => {
     // Reading the shim's text cannot catch a broken import path or a throw on load — the file
     // would still contain both lines above and still be dead on arrival for anyone who ran it.
-    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'pw'), '--help'], {
+    const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'waybill'), '--help'], {
       encoding: 'utf8',
     });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /^Usage: pw <command> \[options\]$/m);
+    assert.match(result.stdout, /^Usage: waybill <command> \[options\]$/m);
     assert.match(result.stdout, /^ {2}status +Where this docket stands, without the waybill$/m);
   });
 });
